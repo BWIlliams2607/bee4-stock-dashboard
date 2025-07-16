@@ -60,9 +60,11 @@ export async function POST(request: Request) {
       data: { barcode, name, description },
     })
     return NextResponse.json(newProd)
-  } catch (e: any) {
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "Could not create product"
     return NextResponse.json(
-      { error: e.message || "Could not create product" },
+      { error: message },
       { status: 400 }
     )
   }
