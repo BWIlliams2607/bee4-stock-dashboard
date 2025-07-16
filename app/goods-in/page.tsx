@@ -10,11 +10,12 @@ import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner"
 import { toast } from "sonner"
 
 type GoodsInLog = {
+  id: number
   timestamp: string
   barcode: string
   name: string
   sku: string
-  quantity: string
+  quantity: number
   location: string
   shelf: string
 }
@@ -30,6 +31,18 @@ export default function GoodsInPage() {
   const [scannerOpen, setScannerOpen] = useState(false)
   const barcodeInputRef = useRef<HTMLInputElement>(null)
 
+  // Fetch existing logs on mount
+  useEffect(() => {
+    fetch("/api/goods-in")
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to load")
+        return res.json()
+      })
+      .then((data: GoodsInLog[]) => setLog(data))
+      .catch(() => toast.error("Could not load Goods In log"))
+  }, [])
+
+  // Autofill if barcode matches a known product
   useEffect(() => {
     const found = defaultProducts.find(p => p.barcode === barcode)
     if (found) {
@@ -41,24 +54,38 @@ export default function GoodsInPage() {
     }
   }, [barcode])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!barcode || !name || !sku || !quantity || !location || !shelf) {
       toast.error("Please fill all fields")
       return
     }
-    setLog([
-      {
-        timestamp: new Date().toLocaleString(),
-        barcode,
-        name,
-        sku,
-        quantity,
-        location,
-        shelf,
-      },
-      ...log,
-    ])
+
+    // POST to your API
+    const payload = {
+      barcode,
+      name,
+      sku,
+      quantity: parseInt(quantity, 10),
+      location,
+      shelf,
+    }
+
+    const res = await fetch("/api/goods-in", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+
+    if (!res.ok) {
+      toast.error("Failed to save entry")
+      return
+    }
+
+    const saved: GoodsInLog = await res.json()
+    setLog([saved, ...log])
+
+    // reset form
     setBarcode("")
     setName("")
     setSku("")
@@ -214,8 +241,8 @@ export default function GoodsInPage() {
                 </tr>
               ) : (
                 log.map((r, i) => (
-                  <tr key={i} className="border-b border-border">
-                    <td className="p-2">{r.timestamp}</td>
+                  <tr key={r.id} className="border-b border-border">
+                    <td className="p-2">{new Date(r.timestamp).toLocaleString()}</td>
                     <td className="p-2">{r.barcode}</td>
                     <td className="p-2">{r.name}</td>
                     <td className="p-2">{r.sku}</td>
@@ -229,7 +256,6 @@ export default function GoodsInPage() {
           </table>
         </div>
       </div>
-     </motion.div>
+    </motion.div>
   )
 }
-
