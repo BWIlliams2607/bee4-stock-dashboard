@@ -43,12 +43,35 @@ model IncomingStockLog {
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
-  barcode     String   @unique
+  id          Int                   @id @default(autoincrement())
+  barcode     String                @unique
   name        String
   description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+
+  // relation field for categories
+  categories  ProductCategory[]
 
   @@map("products")
+}
+
+/// New category model
+model Category {
+  id        Int                @id @default(autoincrement())
+  name      String             @unique
+  products  ProductCategory[]
+
+  @@map("categories")
+}
+
+/// Join table for Product ↔ Category many-to-many
+model ProductCategory {
+  product    Product   @relation(fields: [productId], references: [id])
+  productId  Int
+  category   Category  @relation(fields: [categoryId], references: [id])
+  categoryId Int
+
+  @@id([productId, categoryId])
+  @@map("product_categories")
 }

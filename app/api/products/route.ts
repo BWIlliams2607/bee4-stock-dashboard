@@ -3,32 +3,30 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
 export async function GET() {
-  try {
-    const products = await prisma.product.findMany({
-      orderBy: { createdAt: "desc" },
-    })
-    return NextResponse.json(products)
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Failed to fetch products"
-    return NextResponse.json({ error: msg }, { status: 500 })
-  }
+  const prods = await prisma.product.findMany({
+    include: { categories: true },
+    orderBy: { createdAt: "desc" },
+  })
+  return NextResponse.json(prods)
 }
 
 export async function POST(request: Request) {
-  try {
-    const { barcode, name, description } = await request.json()
-    if (!barcode || !name) {
-      return NextResponse.json(
-        { error: "barcode and name are required" },
-        { status: 400 }
-      )
-    }
-    const created = await prisma.product.create({
-      data: { barcode, name, description },
-    })
-    return NextResponse.json(created)
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Failed to create product"
-    return NextResponse.json({ error: msg }, { status: 500 })
+  const { barcode, name, description, categoryIds } = await request.json()
+  if (!barcode || !name) {
+    return NextResponse.json({ error: "Barcode and name are required" }, { status: 400 })
   }
+  const newProd = await prisma.product.create({
+    data: {
+      barcode,
+      name,
+      description,
+      categories: {
+        connect: Array.isArray(categoryIds)
+          ? categoryIds.map((id: number) => ({ id }))
+          : [],
+      },
+    },
+    include: { categories: true },
+  })
+  return NextResponse.json(newProd)
 }
