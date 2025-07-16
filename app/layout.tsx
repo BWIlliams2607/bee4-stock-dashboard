@@ -2,7 +2,6 @@ import "./globals.css";
 import { Inter } from "next/font/google";
 import { Sidebar } from "@/components/Sidebar";
 import { Toaster } from "sonner";
-import { Head } from "./head";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,7 +16,6 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    // force dark mode for everyone:
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`${inter.className} bg-background text-foreground`}>
         <div className="flex min-h-screen">
