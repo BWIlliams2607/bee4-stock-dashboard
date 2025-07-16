@@ -10,10 +10,15 @@ export const metadata = {
   description: "Modern stock control for print manufacturing",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className + " bg-background text-foreground"}>
+    // force dark mode for everyone:
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className={`${inter.className} bg-background text-foreground`}>
         <div className="flex min-h-screen">
           <Sidebar />
           <main className="flex-1 ml-0 md:ml-64 p-4 md:p-8 bg-background/90">
