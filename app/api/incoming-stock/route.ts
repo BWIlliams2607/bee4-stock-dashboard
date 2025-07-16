@@ -3,24 +3,26 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
 export async function GET() {
-  const logs = await prisma.incomingStockLog.findMany({
-    orderBy: { timestamp: "desc" },
-  })
-  return NextResponse.json(logs)
+  try {
+    const logs = await prisma.incomingStockLog.findMany({
+      orderBy: { timestamp: "desc" },
+    })
+    return NextResponse.json(logs)
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to fetch Incoming Stock logs"
+    return NextResponse.json({ error: msg }, { status: 500 })
+  }
 }
 
 export async function POST(request: Request) {
-  const { barcode, name, sku, expectedDate, quantity, supplier } =
-    await request.json()
-
-  if (!barcode || !name || !sku) {
-    return NextResponse.json(
-      { error: "barcode, name and sku are required" },
-      { status: 400 }
-    )
-  }
-
   try {
+    const { barcode, name, sku, expectedDate, quantity, supplier } = await request.json()
+    if (!barcode || !name || !sku || expectedDate == null || quantity == null) {
+      return NextResponse.json(
+        { error: "barcode, name, sku, expectedDate and quantity are required" },
+        { status: 400 }
+      )
+    }
     const created = await prisma.incomingStockLog.create({
       data: {
         barcode,
@@ -32,8 +34,8 @@ export async function POST(request: Request) {
       },
     })
     return NextResponse.json(created)
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : "Could not create log"
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to save Incoming Stock log"
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
