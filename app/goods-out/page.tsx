@@ -4,7 +4,7 @@
 import { useEffect, useState, useRef } from "react"
 import { motion } from "framer-motion"
 import { defaultProducts } from "@/data/products"
-import { CheckCircle, Camera } from "lucide-react"
+import { CheckCircle } from "lucide-react"
 import { Button } from "@/components/button"
 import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner"
 import { toast } from "sonner"
