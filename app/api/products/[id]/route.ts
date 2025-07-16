@@ -2,27 +2,24 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = Number(params.id)
+type Context = {
+  params: {
+    id: string
+  }
+}
+
+export async function DELETE(request: Request, context: Context) {
+  const id = Number(context.params.id)
   try {
     await prisma.product.delete({ where: { id } })
     return NextResponse.json({ success: true })
   } catch {
-    return NextResponse.json(
-      { error: "Delete failed" },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: "Delete failed" }, { status: 400 })
   }
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = Number(params.id)
+export async function PATCH(request: Request, context: Context) {
+  const id = Number(context.params.id)
   const { name, description, categoryIds } = await request.json()
   try {
     const updated = await prisma.product.update({
@@ -40,9 +37,6 @@ export async function PATCH(
     })
     return NextResponse.json(updated)
   } catch {
-    return NextResponse.json(
-      { error: "Update failed" },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: "Update failed" }, { status: 400 })
   }
 }
