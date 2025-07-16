@@ -228,4 +228,5 @@ export default function IncomingStockPage() {
         </div>
       </div>
     </motion.div>
-)
+  )
+}

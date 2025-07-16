@@ -229,5 +229,7 @@ export default function GoodsInPage() {
           </table>
         </div>
       </div>
-    </motion.div>
+     </motion.div>
   )
+}
+

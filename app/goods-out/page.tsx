@@ -227,4 +227,6 @@ export default function GoodsOutPage() {
         </div>
       </div>
     </motion.div>
-)
+  )
+}
+
