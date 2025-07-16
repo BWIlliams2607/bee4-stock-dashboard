@@ -61,7 +61,6 @@ export default function GoodsInPage() {
       return
     }
 
-    // POST to your API
     const payload = {
       barcode,
       name,
@@ -240,7 +239,7 @@ export default function GoodsInPage() {
                   </td>
                 </tr>
               ) : (
-                log.map((r, i) => (
+                log.map(r => (
                   <tr key={r.id} className="border-b border-border">
                     <td className="p-2">{new Date(r.timestamp).toLocaleString()}</td>
                     <td className="p-2">{r.barcode}</td>
