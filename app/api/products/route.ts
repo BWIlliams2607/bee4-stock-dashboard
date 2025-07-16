@@ -1,5 +1,4 @@
 // app/api/products/route.ts
-
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
@@ -21,16 +20,16 @@ export async function POST(request: Request) {
   }
 
   try {
-    const newProd = await prisma.product.create({
-      data: { barcode, name, description },
+    const created = await prisma.product.create({
+      data: {
+        barcode,
+        name,
+        description,
+      },
     })
-    return NextResponse.json(newProd)
+    return NextResponse.json(created)
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Could not create product"
-    return NextResponse.json(
-      { error: message },
-      { status: 400 }
-    )
+    const msg = error instanceof Error ? error.message : "Could not create product"
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
