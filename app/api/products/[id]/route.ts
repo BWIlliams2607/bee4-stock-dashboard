@@ -10,8 +10,11 @@ export async function DELETE(
   try {
     await prisma.product.delete({ where: { id } })
     return NextResponse.json({ success: true })
-  } catch (e) {
-    return NextResponse.json({ error: "Delete failed" }, { status: 400 })
+  } catch {
+    return NextResponse.json(
+      { error: "Delete failed" },
+      { status: 400 }
+    )
   }
 }
 
@@ -36,7 +39,10 @@ export async function PATCH(
       include: { categories: true },
     })
     return NextResponse.json(updated)
-  } catch (e) {
-    return NextResponse.json({ error: "Update failed" }, { status: 400 })
+  } catch {
+    return NextResponse.json(
+      { error: "Update failed" },
+      { status: 400 }
+    )
   }
 }
