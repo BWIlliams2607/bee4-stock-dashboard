@@ -1,9 +1,15 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Combobox } from "@headlessui/react"
 import { motion } from "framer-motion"
-import { Plus, Camera, ChevronsUpDown, Trash2 } from "lucide-react"
+import {
+  Plus,
+  Camera,
+  ChevronsUpDown,
+  Trash2,
+  Edit2,
+} from "lucide-react"
 import { MotionButton } from "@/components/button"
 import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner"
 import { toast } from "sonner"
@@ -21,21 +27,25 @@ export default function ProductAdminPage() {
   // fetched data
   const [categories, setCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<Product[]>([])
-  // search/filter
+
+  // filters
   const [catSearch, setCatSearch] = useState("")
   const [prodSearch, setProdSearch] = useState("")
+
   // new category
   const [newCategory, setNewCategory] = useState("")
+
   // new product
   const [newProdBarcode, setNewProdBarcode] = useState("")
   const [newProdName, setNewProdName] = useState("")
   const [newProdDesc, setNewProdDesc] = useState("")
   const [newProdCats, setNewProdCats] = useState<Category[]>([])
-  // scanner
+
+  // barcode scanner
   const [scannerOpen, setScannerOpen] = useState(false)
   const barcodeRef = useRef<HTMLInputElement>(null)
 
-  // fetch categories + products on mount
+  // initial fetch
   useEffect(() => {
     fetch("/api/categories")
       .then((r) => r.json())
@@ -63,7 +73,7 @@ export default function ProductAdminPage() {
       )
     : products
 
-  // create a new category
+  // add category
   const handleAddCategory = async () => {
     if (!newCategory.trim()) return
     const res = await fetch("/api/categories", {
@@ -78,7 +88,7 @@ export default function ProductAdminPage() {
     toast.success("Category added")
   }
 
-  // create a new product
+  // add product
   const handleAddProduct = async () => {
     if (!newProdBarcode || !newProdName) {
       return toast.error("Barcode & name required")
@@ -96,7 +106,6 @@ export default function ProductAdminPage() {
     if (!res.ok) return toast.error("Could not create product")
     const prod: Product = await res.json()
     setProducts((p) => [prod, ...p])
-    // reset
     setNewProdBarcode("")
     setNewProdName("")
     setNewProdDesc("")
@@ -113,10 +122,9 @@ export default function ProductAdminPage() {
     >
       <h1 className="text-2xl font-bold">Product Administration</h1>
 
-      {/* === Category Management === */}
+      {/* Category Management */}
       <section className="bg-muted/70 p-6 rounded-2xl shadow-soft">
         <h2 className="text-lg font-semibold mb-4">Categories</h2>
-
         <div className="flex gap-2 mb-4">
           <input
             type="text"
@@ -160,12 +168,11 @@ export default function ProductAdminPage() {
         </ul>
       </section>
 
-      {/* === Product Creation === */}
+      {/* Product Creation */}
       <section className="bg-muted/70 p-6 rounded-2xl shadow-soft">
         <h2 className="text-lg font-semibold mb-4">Add New Product</h2>
-
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Barcode + scan */}
+          {/* Barcode */}
           <div className="relative md:col-span-1">
             <label className="block text-sm font-medium mb-1">Barcode</label>
             <div className="flex">
@@ -214,7 +221,7 @@ export default function ProductAdminPage() {
             />
           </div>
 
-          {/* Categories multi-select */}
+          {/* Categories Multi-select */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Categories
@@ -267,7 +274,7 @@ export default function ProductAdminPage() {
         </div>
       </section>
 
-      {/* === Product List & Search === */}
+      {/* Product List & Actions */}
       <section>
         <div className="mb-4 flex gap-2">
           <input
@@ -309,19 +316,63 @@ export default function ProductAdminPage() {
                     {p.categories.map((c) => c.name).join(", ") || "—"}
                   </td>
                   <td className="p-2 flex gap-2">
-                    {/* placeholder for edit/delete */}
+                    {/* Delete */}
                     <button
+                      onClick={async () => {
+                        if (!confirm("Delete this product?")) return
+                        const res = await fetch(`/api/products/${p.id}`, {
+                          method: "DELETE",
+                        })
+                        if (res.ok) {
+                          setProducts((list) =>
+                            list.filter((x) => x.id !== p.id)
+                          )
+                          toast.success("Deleted")
+                        } else {
+                          toast.error("Delete failed")
+                        }
+                      }}
                       className="text-rose-500 hover:text-rose-700"
-                      title="Delete (not implemented)"
+                      title="Delete"
                     >
                       <Trash2 size={16} />
+                    </button>
+
+                    {/* Edit (name only) */}
+                    <button
+                      onClick={async () => {
+                        const newName = prompt("New name", p.name)
+                        if (newName == null || newName === p.name) return
+                        const res = await fetch(`/api/products/${p.id}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            name: newName,
+                            description: p.description,
+                            categoryIds: p.categories.map((c) => c.id),
+                          }),
+                        })
+                        if (!res.ok) return toast.error("Update failed")
+                        const updated = await res.json()
+                        setProducts((list) =>
+                          list.map((x) => (x.id === updated.id ? updated : x))
+                        )
+                        toast.success("Updated")
+                      }}
+                      className="text-blue-500 hover:text-blue-700"
+                      title="Edit"
+                    >
+                      <Edit2 size={16} />
                     </button>
                   </td>
                 </tr>
               ))}
               {filteredProds.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="p-4 text-center text-muted-foreground">
+                  <td
+                    colSpan={5}
+                    className="p-4 text-center text-muted-foreground"
+                  >
                     No products found
                   </td>
                 </tr>
@@ -331,7 +382,7 @@ export default function ProductAdminPage() {
         </div>
       </section>
 
-      {/* Barcode scanner modal */}
+      {/* Barcode Scanner Modal */}
       {scannerOpen && (
         <CameraBarcodeScanner
           onDetected={(code) => {
@@ -343,5 +394,5 @@ export default function ProductAdminPage() {
         />
       )}
     </motion.div>
-)
+  )
 }
