@@ -8,41 +8,24 @@ interface User {
   role: "admin" | "warehouse"
 }
 
-// Public: anyone can list products
-export async function GET() {
-  const products = await prisma.product.findMany({
-    orderBy: { createdAt: "desc" },
-  })
-  return NextResponse.json(products)
-}
-
-// Protected: only admins can add a product
 export async function POST(request: Request) {
-  // 1. Grab and parse the cookie
-  const cookieStore = cookies()
+  // 1. Grab and parse the cookie (await the promise!)
+  const cookieStore = await cookies()
   const userCookie = cookieStore.get("bee4-user")
   if (!userCookie) {
-    return NextResponse.json(
-      { error: "Not authenticated" },
-      { status: 401 }
-    )
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
   }
+
   let user: User
   try {
     user = JSON.parse(userCookie.value)
   } catch {
-    return NextResponse.json(
-      { error: "Invalid session" },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: "Invalid session" }, { status: 400 })
   }
 
   // 2. Check admin role
   if (user.role !== "admin") {
-    return NextResponse.json(
-      { error: "Not authorized" },
-      { status: 403 }
-    )
+    return NextResponse.json({ error: "Not authorized" }, { status: 403 })
   }
 
   // 3. Read and validate body
@@ -63,9 +46,6 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Could not create product"
-    return NextResponse.json(
-      { error: message },
-      { status: 400 }
-    )
+    return NextResponse.json({ error: message }, { status: 400 })
   }
 }
