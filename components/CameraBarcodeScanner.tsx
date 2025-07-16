@@ -1,5 +1,3 @@
-"use client"
-
 import dynamic from "next/dynamic"
 import { useState } from "react"
 import { Camera, X } from "lucide-react"
@@ -37,7 +35,7 @@ export function CameraBarcodeScanner({
             delay={300}
             onUpdate={(err, result) => {
               if (err) setError("No barcode detected")
-              if (result) onDetected(result.text)
+              if (result) onDetected(result.getText())
             }}
           />
         </div>
