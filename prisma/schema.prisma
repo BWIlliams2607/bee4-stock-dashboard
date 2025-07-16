@@ -41,3 +41,14 @@ model IncomingStockLog {
   quantity     Int
   supplier     String
 }
+
+model Product {
+  id          Int      @id @default(autoincrement())
+  barcode     String   @unique
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("products")
+}
