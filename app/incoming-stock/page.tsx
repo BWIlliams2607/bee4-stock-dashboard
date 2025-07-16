@@ -1,28 +1,19 @@
+// app/incoming-stock/page.tsx
 "use client"
 
 import { useEffect, useState, useRef } from "react"
 import { Combobox } from "@headlessui/react"
 import { motion } from "framer-motion"
-import { CheckCircle, Camera, ChevronUpDown } from "lucide-react"
+import { CheckCircle, Camera, ChevronsUpDown } from "lucide-react"
 import { Button } from "@/components/button"
 import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner"
 import { toast } from "sonner"
 
-type Product = {
-  id: number
-  barcode: string
-  name: string
-}
-
+type Product = { id: number; barcode: string; name: string }
 type IncomingStockLog = {
-  id: number
-  timestamp: string
-  barcode: string
-  name: string
-  sku: string
-  expectedDate: string
-  quantity: number
-  supplier: string
+  id: number; timestamp: string; barcode: string;
+  name: string; sku: string; expectedDate: string;
+  quantity: number; supplier: string
 }
 
 export default function IncomingStockPage() {
@@ -39,89 +30,66 @@ export default function IncomingStockPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/products").then(r => r.json()),
-      fetch("/api/incoming-stock").then(r => r.json())
-    ])
-      .then(([ps, ls]) => {
-        setProducts(ps)
-        setLogs(ls)
-      })
-      .catch(() => toast.error("Failed to load data"))
+      fetch("/api/products").then(r=>r.json()),
+      fetch("/api/incoming-stock").then(r=>r.json())
+    ]).then(([ps,ls])=>{
+      setProducts(ps); setLogs(ls)
+    }).catch(()=>toast.error("Failed to load data"))
   }, [])
 
-  const filtered =
-    query === ""
-      ? products
-      : products.filter(p =>
-          p.name.toLowerCase().includes(query.toLowerCase()) ||
-          p.barcode.includes(query)
-        )
+  const filtered = query===""
+    ? products
+    : products.filter(p=>
+        p.name.toLowerCase().includes(query.toLowerCase())||
+        p.barcode.includes(query)
+      )
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e:React.FormEvent)=>{
     e.preventDefault()
-    if (!selected || !expectedDate || !quantity || !supplier) {
-      return toast.error("Please fill all fields")
-    }
-    const payload = {
-      barcode: selected.barcode,
-      name: selected.name,
-      sku: selected.barcode,
-      expectedDate,
-      quantity: Number(quantity),
-      supplier,
-    }
-    const res = await fetch("/api/incoming-stock", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+    if(!selected||!expectedDate||!quantity||!supplier) return toast.error("Please fill all fields")
+    const payload={barcode:selected.barcode,name:selected.name,sku:selected.barcode,
+                   expectedDate,quantity:Number(quantity),supplier}
+    const res=await fetch("/api/incoming-stock",{method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify(payload)
     })
-    if (!res.ok) return toast.error("Failed to save entry")
-    const saved: IncomingStockLog = await res.json()
-    setLogs([saved, ...logs])
+    if(!res.ok) return toast.error("Failed to save entry")
+    const saved:IncomingStockLog=await res.json()
+    setLogs([saved,...logs])
     setExpectedDate(""); setQuantity(""); setSupplier("")
     toast.success("Incoming stock logged!")
     comboRef.current?.focus()
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="space-y-8">
+    <motion.div initial={{opacity:0,y:10}} animate={{opacity:1,y:0}} transition={{duration:0.4}} className="space-y-8">
       <div className="flex items-center gap-3">
         <CheckCircle size={28} className="text-purple-500" />
         <h1 className="text-3xl font-bold">Incoming Stock</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="grid max-w-3xl mx-auto gap-6 bg-muted/70 p-6 rounded-2xl shadow-xl grid-cols-1 md:grid-cols-3">
-        {/* Combobox + Scan */}
         <div className="col-span-1 md:col-span-3">
           <label className="block text-sm font-semibold mb-1">Product</label>
           <div className="relative">
-            <button
-              type="button"
-              onClick={() => setScannerOpen(true)}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              title="Scan barcode"
-            >
-              <Camera size={20} />
+            <button type="button" onClick={()=>setScannerOpen(true)} className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground" title="Scan barcode">
+              <Camera size={20}/>
             </button>
             <Combobox value={selected} onChange={setSelected}>
-              <Combobox.Input
-                ref={comboRef}
+              <Combobox.Input ref={comboRef}
                 className="w-full rounded-lg border border-border bg-background px-10 py-2 pr-10"
-                displayValue={(p: Product) => p?.name || ""}
-                onChange={e => setQuery(e.target.value)}
+                displayValue={(p:Product)=>p?.name||""}
+                onChange={e=>setQuery(e.target.value)}
                 placeholder="Search by name or barcode…"
               />
               <Combobox.Button className="absolute inset-y-0 right-2 flex items-center">
-                <ChevronUpDown size={20} />
+                <ChevronsUpDown size={20}/>
               </Combobox.Button>
-              {filtered.length > 0 && (
+              {filtered.length>0 && (
                 <Combobox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-lg bg-background py-1 text-sm shadow-lg z-10">
-                  {filtered.map(p => (
-                    <Combobox.Option
-                      key={p.id}
-                      value={p}
-                      className={({ active }) => `cursor-pointer px-4 py-2 ${active ? "bg-purple-500 text-white" : ""}`}
-                    >
+                  {filtered.map(p=>(
+                    <Combobox.Option key={p.id} value={p}
+                      className={({active})=>`cursor-pointer px-4 py-2 ${active?"bg-purple-500 text-white":""}`}>
                       <span className="block font-medium">{p.name}</span>
                       <span className="block text-xs text-muted-foreground">{p.barcode}</span>
                     </Combobox.Option>
@@ -132,101 +100,66 @@ export default function IncomingStockPage() {
           </div>
         </div>
 
-        {/* Expected Date */}
         <div>
           <label className="block text-sm font-semibold mb-1">Expected Date</label>
-          <input
-            type="date" required
-            value={expectedDate} onChange={e => setExpectedDate(e.target.value)}
-            className="w-full rounded-lg border border-border px-4 py-2 bg-background"
-          />
+          <input type="date" required value={expectedDate} onChange={e=>setExpectedDate(e.target.value)}
+            className="w-full rounded-lg border border-border px-4 py-2 bg-background"/>
         </div>
 
-        {/* Quantity */}
         <div>
           <label className="block text-sm font-semibold mb-1">Quantity</label>
-          <input
-            type="number" min={1} required
-            value={quantity} onChange={e => setQuantity(e.target.value)}
-            className="w-full rounded-lg border border-border px-4 py-2 bg-background"
-            placeholder="e.g. 50"
-          />
+          <input type="number" min={1} required value={quantity} onChange={e=>setQuantity(e.target.value)}
+            className="w-full rounded-lg border border-border px-4 py-2 bg-background" placeholder="e.g. 50"/>
         </div>
 
-        {/* Supplier */}
         <div>
           <label className="block text-sm font-semibold mb-1">Supplier</label>
-          <input
-            required
-            value={supplier} onChange={e => setSupplier(e.target.value)}
-            className="w-full rounded-lg border border-border px-4 py-2 bg-background"
-            placeholder="e.g. Acme Inc."
-          />
+          <input required value={supplier} onChange={e=>setSupplier(e.target.value)}
+            className="w-full rounded-lg border border-border px-4 py-2 bg-background" placeholder="e.g. Acme Inc."/>
         </div>
 
-        {/* Submit */}
         <div className="md:col-span-3">
-          <Button type="submit" className="w-full flex justify-center gap-2">
-            Log Incoming <CheckCircle size={20} />
-          </Button>
+          <Button type="submit" className="w-full flex justify-center gap-2">Log Incoming <CheckCircle size={20}/></Button>
         </div>
       </form>
 
       {scannerOpen && (
-        <CameraBarcodeScanner
-          onDetected={code => {
-            const prod = products.find(p => p.barcode === code)
-            if (prod) setSelected(prod)
-            else toast.error("Unknown barcode")
-            setScannerOpen(false)
-            comboRef.current?.focus()
-          }}
-          onClose={() => setScannerOpen(false)}
-        />
+        <CameraBarcodeScanner onDetected={code=>{
+          const prod=products.find(p=>p.barcode===code)
+          if(prod) setSelected(prod)
+          else toast.error("Unknown barcode")
+          setScannerOpen(false)
+          comboRef.current?.focus()
+        }} onClose={()=>setScannerOpen(false)}/>
       )}
 
-      {/* Log Search + Table */}
       <div className="max-w-3xl mx-auto space-y-4">
-        <input
-          type="text"
-          value={searchLog}
-          onChange={e => setSearchLog(e.target.value)}
-          placeholder="Search logs…"
-          className="w-full rounded-lg border border-border px-4 py-2 bg-background text-sm"
-        />
-
+        <input type="text" value={searchLog} onChange={e=>setSearchLog(e.target.value)}
+          placeholder="Search logs…" className="w-full rounded-lg border border-border px-4 py-2 bg-background text-sm"/>
         <div className="overflow-x-auto bg-muted/70 p-4 rounded-2xl shadow-xl">
           <table className="min-w-full text-sm">
-            <thead>
-              <tr className="border-b border-border">
-                {["Time","Product","Barcode","Expected","Qty","Supplier"].map(h => (
-                  <th key={h} className="p-2 text-left">{h}</th>
-                ))}
-              </tr>
-            </thead>
+            <thead><tr className="border-b border-border">
+              {["Time","Product","Barcode","Expected","Qty","Supplier"].map(h=>(
+                <th key={h} className="p-2 text-left">{h}</th>
+              ))}
+            </tr></thead>
             <tbody>
-              {logs
-                .filter(r =>
-                  r.name.toLowerCase().includes(searchLog.toLowerCase()) ||
-                  r.barcode.includes(searchLog) ||
-                  r.supplier.toLowerCase().includes(searchLog.toLowerCase())
-                )
-                .map(r => (
-                  <tr key={r.id} className="border-b border-border hover:bg-muted/50">
-                    <td className="p-2">{new Date(r.timestamp).toLocaleString()}</td>
-                    <td className="p-2">{r.name}</td>
-                    <td className="p-2">{r.barcode}</td>
-                    <td className="p-2">{r.expectedDate}</td>
-                    <td className="p-2">{r.quantity}</td>
-                    <td className="p-2">{r.supplier}</td>
-                  </tr>
-                ))}
-              {logs.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="p-4 text-center text-muted-foreground">
-                    No logs yet
-                  </td>
+              {logs.filter(r=>
+                r.name.toLowerCase().includes(searchLog.toLowerCase())||
+                r.barcode.includes(searchLog)||
+                r.supplier.toLowerCase().includes(searchLog.toLowerCase())
+              ).map(r=>(
+                <tr key={r.id} className="border-b border-border hover:bg-muted/50">
+                  <td className="p-2">{new Date(r.timestamp).toLocaleString()}</td>
+                  <td className="p-2">{r.name}</td>
+                  <td className="p-2">{r.barcode}</td>
+                  <td className="p-2">{r.expectedDate}</td>
+                  <td className="p-2">{r.quantity}</td>
+                  <td className="p-2">{r.supplier}</td>
                 </tr>
+              ))}
+              {logs.length===0 && (
+                <tr><td colSpan={7} className="p-4 text-center text-muted-foreground">No logs yet</td></tr>
               )}
             </tbody>
           </table>
