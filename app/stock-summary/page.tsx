@@ -14,13 +14,22 @@ type GoodsLog = { barcode: string; quantity: number }
 
 export default function StockSummaryPage() {
   const [summary, setSummary] = useState<
-    { category: Category; items: { product: Product; totalIn: number; totalOut: number; stock: number }[] }[]
+    {
+      category: Category
+      items: {
+        product: Product
+        totalIn: number
+        totalOut: number
+        stock: number
+      }[]
+    }[]
   >([])
   const [catFilter, setCatFilter] = useState("")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchData() {
+      setLoading(true)
       try {
         const [cats, prods, ins, outs] = await Promise.all([
           fetch("/api/categories").then((r) => r.json()),
@@ -29,33 +38,37 @@ export default function StockSummaryPage() {
           fetch("/api/goods-out").then((r) => r.json()),
         ])
 
-        // Group quantities by barcode
-        const inMap = new Map<string, number>()
-        (ins as GoodsLog[]).forEach((i) => {
-          inMap.set(i.barcode, (inMap.get(i.barcode) || 0) + i.quantity)
+        // tally ins and outs by barcode using plain objects
+        const inCounts: Record<string, number> = {}
+        ;(ins as GoodsLog[]).forEach((i) => {
+          inCounts[i.barcode] = (inCounts[i.barcode] || 0) + i.quantity
         })
 
-        const outMap = new Map<string, number>()
-        (outs as GoodsLog[]).forEach((o) => {
-          outMap.set(o.barcode, (outMap.get(o.barcode) || 0) + o.quantity)
+        const outCounts: Record<string, number> = {}
+        ;(outs as GoodsLog[]).forEach((o) => {
+          outCounts[o.barcode] = (outCounts[o.barcode] || 0) + o.quantity
         })
 
-        // Build summary per category
+        // build per-category summary
         const sum = (cats as Category[]).map((cat) => {
-          // Products in this category
           const items = (prods as Product[])
             .filter((p) => p.categories.some((c) => c.id === cat.id))
             .map((p) => {
-              const ti = inMap.get(p.barcode) || 0
-              const to = outMap.get(p.barcode) || 0
-              return { product: p, totalIn: ti, totalOut: to, stock: ti - to }
+              const totalIn = inCounts[p.barcode] || 0
+              const totalOut = outCounts[p.barcode] || 0
+              return {
+                product: p,
+                totalIn,
+                totalOut,
+                stock: totalIn - totalOut,
+              }
             })
           return { category: cat, items }
         })
 
         setSummary(sum)
       } catch (e) {
-        console.error(e)
+        console.error("Failed to load stock summary", e)
       } finally {
         setLoading(false)
       }
@@ -84,7 +97,10 @@ export default function StockSummaryPage() {
           s.category.name.toLowerCase().includes(catFilter.toLowerCase())
         )
         .map(({ category, items }) => (
-          <section key={category.id} className="bg-muted/70 p-6 rounded-2xl shadow-soft">
+          <section
+            key={category.id}
+            className="bg-muted/70 p-6 rounded-2xl shadow-soft"
+          >
             <h2 className="text-xl font-semibold mb-4">{category.name}</h2>
 
             {items.length > 0 ? (
@@ -116,7 +132,9 @@ export default function StockSummaryPage() {
                 </table>
               </div>
             ) : (
-              <div className="text-muted-foreground">No products in this category.</div>
+              <div className="text-muted-foreground">
+                No products in this category.
+              </div>
             )}
           </section>
         ))}
