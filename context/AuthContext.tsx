@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 
-type User = {
+// Define the User type
+export type User = {
   username: string
   role: 'admin' | 'warehouse'
 }
@@ -15,7 +16,8 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-const mockUsers = [
+// Mock users list with explicit role types
+const mockUsers: { username: string; password: string; role: 'admin' | 'warehouse' }[] = [
   { username: 'admin', password: 'admin123', role: 'admin' },
   { username: 'warehouse', password: 'wh123', role: 'warehouse' },
 ]
@@ -29,11 +31,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [])
 
   const login = (username: string, password: string) => {
-    const found = mockUsers.find(u => u.username === username && u.password === password)
+    const found = mockUsers.find(
+      u => u.username === username && u.password === password
+    )
     if (found) {
-      const user = { username: found.username, role: found.role }
-      setUser(user)
-      localStorage.setItem('bee4-user', JSON.stringify(user))
+      // found.role is correctly typed as 'admin' | 'warehouse'
+      const newUser: User = { username: found.username, role: found.role }
+      setUser(newUser)
+      localStorage.setItem('bee4-user', JSON.stringify(newUser))
       return true
     }
     return false
