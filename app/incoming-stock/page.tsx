@@ -1,36 +1,72 @@
 "use client"
 
-import { useState, useRef } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useEffect, useState, useRef } from "react"
+import { motion } from "framer-motion"
+import { defaultProducts, Product } from "@/data/products"
+import { CheckCircle, Camera } from "lucide-react"
 import { Button } from "@/components/button"
-import { ProductDropdown } from "@/components/ProductDropdown"
+import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner"
 import { toast } from "sonner"
-import { Truck } from "lucide-react"
+
+type IncomingStockLog = {
+  timestamp: string
+  barcode: string
+  name: string
+  sku: string
+  expectedDate: string
+  quantity: string
+  supplier: string
+}
 
 export default function IncomingStockPage() {
-  const [product, setProduct] = useState("")
+  const [barcode, setBarcode] = useState("")
+  const [name, setName] = useState("")
+  const [sku, setSku] = useState("")
+  const [expectedDate, setExpectedDate] = useState("")
   const [quantity, setQuantity] = useState("")
   const [supplier, setSupplier] = useState("")
-  const [expected, setExpected] = useState("")
-  const [log, setLog] = useState<any[]>([])
-  const productRef = useRef<HTMLInputElement>(null)
+  const [log, setLog] = useState<IncomingStockLog[]>([])
+  const [scannerOpen, setScannerOpen] = useState(false)
+  const barcodeInputRef = useRef<HTMLInputElement>(null)
+
+  // Autofill if barcode matches a known product
+  useEffect(() => {
+    const found = defaultProducts.find(p => p.barcode === barcode)
+    if (found) {
+      setName(found.name)
+      setSku(found.sku)
+    } else if (barcode) {
+      setName("")
+      setSku("")
+    }
+  }, [barcode])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!product || !quantity || !supplier || !expected) return
-
-    const entry = {
-      timestamp: new Date().toLocaleString(),
-      product, quantity, supplier, expected,
+    if (!barcode || !name || !sku || !expectedDate || !quantity || !supplier) {
+      toast.error("Please fill all fields")
+      return
     }
-    setLog([entry, ...log])
-    toast.success("Incoming stock logged!")
-
-    setProduct("")
+    setLog([
+      {
+        timestamp: new Date().toLocaleString(),
+        barcode,
+        name,
+        sku,
+        expectedDate,
+        quantity,
+        supplier,
+      },
+      ...log,
+    ])
+    setBarcode("")
+    setName("")
+    setSku("")
+    setExpectedDate("")
     setQuantity("")
     setSupplier("")
-    setExpected("")
-    productRef.current?.focus()
+    toast.success("Incoming stock logged!")
+    barcodeInputRef.current?.focus()
   }
 
   return (
@@ -41,116 +77,160 @@ export default function IncomingStockPage() {
       className="space-y-12"
     >
       <div className="flex items-center gap-3 mb-2">
-        <span className="rounded-lg bg-yellow-500/90 text-white p-2 shadow-sm">
-          <Truck size={22} />
+        <span className="rounded-lg bg-purple-700/80 text-white p-2 shadow-sm">
+          <CheckCircle size={22} />
         </span>
-        <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-yellow-400 to-purple-400 bg-clip-text text-transparent">
+        <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-gray-400 to-purple-400 bg-clip-text text-transparent">
           Incoming Stock
         </h2>
       </div>
 
-      <motion.form
+      {/* Incoming Stock Form */}
+      <form
         onSubmit={handleSubmit}
-        className="w-full bg-muted/70 shadow-xl rounded-2xl px-4 py-8 md:px-10 md:py-10 max-w-7xl mx-auto space-y-8"
-        initial={{ scale: 0.98, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.3 }}
+        className="max-w-3xl mx-auto bg-muted/70 shadow-xl rounded-2xl p-6 md:p-8 flex flex-col gap-4"
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div>
-            <ProductDropdown value={product} onChange={setProduct} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Barcode */}
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold">Barcode</label>
+            <div className="flex items-center gap-2">
+              <input
+                required
+                value={barcode}
+                ref={barcodeInputRef}
+                onChange={e => setBarcode(e.target.value)}
+                className="px-4 py-2 rounded-lg bg-background text-foreground border border-border flex-1"
+                placeholder="Scan or enter barcode"
+              />
+              <button
+                type="button"
+                className="flex items-center justify-center rounded-lg w-10 h-10 bg-muted hover:bg-purple-700/80 text-muted-foreground hover:text-white transition"
+                onClick={() => setScannerOpen(true)}
+                title="Scan barcode"
+                tabIndex={-1}
+              >
+                <Camera size={22} />
+              </button>
+            </div>
           </div>
-          <div className="flex flex-col gap-1">
+          {/* Name */}
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold">Product Name</label>
+            <input
+              required
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="px-4 py-2 rounded-lg bg-background text-foreground border border-border"
+              placeholder="Product name"
+            />
+          </div>
+          {/* SKU */}
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold">SKU</label>
+            <input
+              required
+              value={sku}
+              onChange={e => setSku(e.target.value)}
+              className="px-4 py-2 rounded-lg bg-background text-foreground border border-border"
+              placeholder="SKU"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Expected Date */}
+          <div className="flex flex-col">
+            <label className="text-sm font-semibold">Expected Date</label>
+            <input
+              required
+              value={expectedDate}
+              onChange={e => setExpectedDate(e.target.value)}
+              className="px-4 py-2 rounded-lg bg-background text-foreground border border-border"
+              type="date"
+            />
+          </div>
+          {/* Quantity */}
+          <div className="flex flex-col">
             <label className="text-sm font-semibold">Quantity</label>
             <input
               required
-              type="number"
               value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
+              onChange={e => setQuantity(e.target.value)}
               className="px-4 py-2 rounded-lg bg-background text-foreground border border-border"
-              placeholder="e.g. 500"
-              ref={productRef}
+              placeholder="Quantity"
+              type="number"
+              min="1"
             />
           </div>
-          <div className="flex flex-col gap-1">
+          {/* Supplier */}
+          <div className="flex flex-col">
             <label className="text-sm font-semibold">Supplier</label>
             <input
               required
-              type="text"
               value={supplier}
-              onChange={(e) => setSupplier(e.target.value)}
+              onChange={e => setSupplier(e.target.value)}
               className="px-4 py-2 rounded-lg bg-background text-foreground border border-border"
-              placeholder="e.g. Avery"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold">Expected Arrival</label>
-            <input
-              required
-              type="date"
-              value={expected}
-              onChange={(e) => setExpected(e.target.value)}
-              className="px-4 py-2 rounded-lg bg-background text-foreground border border-border"
+              placeholder="Supplier"
             />
           </div>
         </div>
-        <Button type="submit" className="w-full md:w-auto mt-2 flex gap-2 items-center">
-          Add Incoming
+        <Button type="submit" className="mt-2 flex gap-2 items-center">
+          Log Incoming <CheckCircle size={20} />
         </Button>
-      </motion.form>
+      </form>
 
-      <motion.div
-        className="bg-muted/70 shadow-xl rounded-2xl p-6 md:p-8 max-w-7xl mx-auto"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <span className="text-xl font-bold">Expected Arrivals</span>
-          <span className="ml-1 mt-0.5 text-yellow-500">●</span>
-        </div>
+      {scannerOpen && (
+        <CameraBarcodeScanner
+          onDetected={code => {
+            setBarcode(code)
+            setScannerOpen(false)
+            barcodeInputRef.current?.focus()
+          }}
+          onClose={() => setScannerOpen(false)}
+        />
+      )}
+
+      {/* Log Table */}
+      <div className="max-w-3xl mx-auto bg-muted/70 shadow-xl rounded-2xl p-6 md:p-8">
+        <h3 className="text-lg font-bold mb-2">Incoming Stock Log</h3>
         <div className="overflow-x-auto rounded-lg">
-          <table className="min-w-full text-sm">
+          <table className="min-w-full text-xs">
             <thead>
               <tr className="border-b border-border">
-                <th className="p-2 text-left font-semibold">Time</th>
-                <th className="p-2 text-left font-semibold">Product</th>
-                <th className="p-2 text-left font-semibold">Qty</th>
-                <th className="p-2 text-left font-semibold">Supplier</th>
-                <th className="p-2 text-left font-semibold">Expected</th>
+                <th className="p-2 text-left">Timestamp</th>
+                <th className="p-2 text-left">Barcode</th>
+                <th className="p-2 text-left">Name</th>
+                <th className="p-2 text-left">SKU</th>
+                <th className="p-2 text-left">Expected Date</th>
+                <th className="p-2 text-left">Quantity</th>
+                <th className="p-2 text-left">Supplier</th>
               </tr>
             </thead>
-            <AnimatePresence>
-              <tbody>
-                {log.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="p-3 text-center text-muted-foreground">
-                      No incoming stock yet
-                    </td>
+            <tbody>
+              {log.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-3 text-center text-muted-foreground">
+                    No records yet
+                  </td>
+                </tr>
+              ) : (
+                log.map((row, i) => (
+                  <tr key={i} className="border-b border-border">
+                    <td className="p-2">{row.timestamp}</td>
+                    <td className="p-2">{row.barcode}</td>
+                    <td className="p-2">{row.name}</td>
+                    <td className="p-2">{row.sku}</td>
+                    <td className="p-2">{row.expectedDate}</td>
+                    <td className="p-2">{row.quantity}</td>
+                    <td className="p-2">{row.supplier}</td>
                   </tr>
-                ) : (
-                  log.map((entry, i) => (
-                    <motion.tr
-                      key={i}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      transition={{ duration: 0.2 }}
-                      className="border-b border-border hover:bg-background/80"
-                    >
-                      <td className="p-2">{entry.timestamp}</td>
-                      <td className="p-2">{entry.product}</td>
-                      <td className="p-2">{entry.quantity}</td>
-                      <td className="p-2">{entry.supplier}</td>
-                      <td className="p-2">{entry.expected}</td>
-                    </motion.tr>
-                  ))
-                )}
-              </tbody>
-            </AnimatePresence>
+                ))
+              )}
+            </tbody>
           </table>
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   )
 }

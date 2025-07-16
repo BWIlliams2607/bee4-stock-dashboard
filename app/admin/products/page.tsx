@@ -8,16 +8,24 @@ import { Button } from "@/components/button"
 import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner"
 import { toast } from "sonner"
 
+type LogEntry = {
+  time: string
+  barcode: string
+  name: string
+  sku: string
+  action?: "ADDED" | "REMOVED"
+}
+
 export default function ProductAdminPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [barcode, setBarcode] = useState("")
   const [name, setName] = useState("")
   const [sku, setSku] = useState("")
-  const [log, setLog] = useState<any[]>([])
+  const [log, setLog] = useState<LogEntry[]>([])
   const [scannerOpen, setScannerOpen] = useState(false)
   const barcodeInputRef = useRef<HTMLInputElement>(null)
 
-  // On mount: load products from localStorage, or use defaults
+  // Load products from localStorage, or use defaults
   useEffect(() => {
     const stored = localStorage.getItem("bee4-products")
     if (stored) {
@@ -27,7 +35,7 @@ export default function ProductAdminPage() {
     }
   }, [])
 
-  // On products change: save to localStorage
+  // Save products to localStorage whenever they change
   useEffect(() => {
     if (products.length) {
       localStorage.setItem("bee4-products", JSON.stringify(products))
@@ -44,7 +52,7 @@ export default function ProductAdminPage() {
     const newProduct: Product = { barcode, name, sku }
     setProducts([newProduct, ...products])
     setLog([
-      { time: new Date().toLocaleString(), ...newProduct },
+      { time: new Date().toLocaleString(), barcode, name, sku, action: "ADDED" },
       ...log,
     ])
     setBarcode("")
@@ -58,7 +66,7 @@ export default function ProductAdminPage() {
     const removed = products[idx]
     setProducts(products.filter((_, i) => i !== idx))
     setLog([
-      { time: new Date().toLocaleString(), action: "REMOVED", ...removed },
+      { time: new Date().toLocaleString(), barcode: removed.barcode, name: removed.name, sku: removed.sku, action: "REMOVED" },
       ...log,
     ])
   }

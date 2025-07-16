@@ -1,29 +1,26 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
-import { motion } from "framer-motion"
+import React from "react";
+import { motion } from "framer-motion";
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {}
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  children: React.ReactNode;
+};
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, children, ...props }, ref) => {
-    return (
-      <motion.button
-        whileTap={{ scale: 0.97 }}
-        whileHover={{ scale: 1.03 }}
-        ref={ref}
-        className={cn(
-          // Always visible on dark backgrounds!
-          "inline-flex items-center justify-center rounded-xl px-6 py-2 text-base font-semibold shadow-soft transition focus:outline-none",
-          "bg-white text-black hover:bg-gray-100 active:bg-gray-200 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700 dark:active:bg-gray-600",
-          className
-        )}
-        {...props}
-      >
-        {children}
-      </motion.button>
-    )
-  }
-)
-Button.displayName = "Button"
+// Standard Button component (no motion by default)
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ children, className = "", ...props }, ref) => (
+    <button
+      ref={ref}
+      className={
+        "px-4 py-2 rounded-lg font-semibold transition-all shadow hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/80 " +
+        className
+      }
+      {...props}
+    >
+      {children}
+    </button>
+  )
+);
+Button.displayName = "Button";
 
-export { Button }
+// Framer Motion-enhanced Button for animated buttons
+export const MotionButton = motion(Button);
