@@ -1,6 +1,4 @@
 // app/layout.tsx
-"use client"
-
 import "./globals.css"
 import { Inter } from "next/font/google"
 import { Sidebar } from "@/components/Sidebar"
@@ -21,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      {/* Load Tailwind’s full utility set from the CDN before anything else */}
+      {/* Tailwind CDN */}
       <Script
         src="https://cdn.tailwindcss.com"
         strategy="beforeInteractive"
