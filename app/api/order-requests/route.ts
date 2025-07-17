@@ -1,24 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
+import nodemailer from "nodemailer";
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: Number(process.env.SMTP_PORT) === 465, // true for 465, false for 587
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
 export async function POST(req: NextRequest) {
   try {
-    // Dynamically import form-data and mailgun.js
-    const formDataModule = await import("form-data");
-    const mailgunModule = await import("mailgun.js");
-    const FormData = formDataModule.default;
-    const Mailgun = mailgunModule.default;
+    const { timestamp, item, category, quantity, priority, location, notes } = await req.json();
 
-    // Create the Mailgun client
-    const mgClient = new Mailgun(FormData).client({
-      username: "api",
-      key: process.env.MAILGUN_API_KEY!,
-    });
-
-    // Parse the incoming JSON body
-    const data = await req.json();
-    const { timestamp, item, category, quantity, priority, location, notes } = data;
-
-    // Build email content
     const subject = `📝 New Order Request: ${item}`;
     const text = `
 Time: ${timestamp}
@@ -30,18 +26,16 @@ Location: ${location}
 Notes: ${notes || "(none)"}
     `;
 
-    // Send the message
-    await mgClient.messages.create(process.env.MAILGUN_DOMAIN!, {
-      from: process.env.FROM_EMAIL!,
-      to: process.env.OFFICE_EMAIL!,
+    await transporter.sendMail({
+      from: process.env.FROM_EMAIL,
+      to: process.env.OFFICE_EMAIL,
       subject,
       text,
     });
 
     return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error("Mailgun error:", err);
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+  } catch (err: any) {
+    console.error("SMTP error:", err);
+    return NextResponse.json({ error: err.message ?? "Unknown error" }, { status: 500 });
   }
 }
