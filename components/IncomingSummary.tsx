@@ -2,8 +2,15 @@
 "use client"
 
 import { Disclosure } from "@headlessui/react"
-import { ChevronUpIcon } from "@heroicons/react/20/solid"
-import { Sparklines, SparklinesLine } from "recharts"
+import { ChevronsUpDown } from "lucide-react"
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts"
 
 interface Incoming {
   timestamp: string
@@ -15,8 +22,11 @@ interface IncomingSummaryProps {
 }
 
 export function IncomingSummary({ details }: IncomingSummaryProps) {
-  // Keep only last 10 points for sparkline
-  const sparkData = details.slice(-10).map((d) => ({ qty: d.qty }))
+  // Keep only last 10 points for the sparkline
+  const sparkData = details.slice(-10).map((d) => ({
+    time: new Date(d.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    qty: d.qty,
+  }))
 
   return (
     <Disclosure>
@@ -31,12 +41,29 @@ export function IncomingSummary({ details }: IncomingSummaryProps) {
             </div>
 
             <div className="flex items-center space-x-4">
+              {/* tiny sparkline */}
               <div className="w-24 h-8">
-                <Sparklines data={sparkData}>
-                  <SparklinesLine style={{ strokeWidth: 2, stroke: "#4F46E5" }} />
-                </Sparklines>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={sparkData}>
+                    <Line
+                      dataKey="qty"
+                      stroke="#4F46E5"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                    {/* hide axes & tooltip */}
+                    <XAxis dataKey="time" hide />
+                    <YAxis hide />
+                    <Tooltip
+                      cursor={false}
+                      contentStyle={{ display: "none" }}
+                      formatter={(value: number) => [`×${value}`, ""]}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
-              <ChevronUpIcon
+
+              <ChevronsUpDown
                 className={`w-5 h-5 text-muted-foreground transform transition ${
                   open ? "rotate-180" : ""
                 }`}
