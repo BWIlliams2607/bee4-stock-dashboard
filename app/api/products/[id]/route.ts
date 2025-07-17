@@ -1,8 +1,10 @@
-import { NextRequest, NextResponse } from "next/server"
+// app/api/products/[id]/route.ts
+
+import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"  // adjust path if needed
 
 export async function DELETE(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   const { id } = params
