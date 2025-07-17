@@ -1,7 +1,7 @@
 // app/api/order-requests/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-// @ts-ignore: no types for nodemailer in this project
+// @ts-expect-error no type declarations for nodemailer
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
