@@ -10,12 +10,6 @@ import { Card } from "@/components/Card"
 import { MotionButton } from "@/components/button"
 import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner"
 
-type Product = {
-  id: string
-  barcode: string
-  name: string
-}
-
 type GoodsInEntry = {
   id: string
   timestamp: string
@@ -25,29 +19,22 @@ type GoodsInEntry = {
 }
 
 export default function GoodsInPage() {
-  const [products, setProducts] = useState<Product[]>([])
   const [entries, setEntries] = useState<GoodsInEntry[]>([])
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [barcode, setBarcode] = useState("")
   const [quantity, setQuantity] = useState<number>(1)
   const [scannerOpen, setScannerOpen] = useState(false)
   const barcodeRef = useRef<HTMLInputElement>(null)
 
-  // Load products and recent entries
+  // Load recent entries
   useEffect(() => {
-    fetch("/api/products")
-      .then((r) => r.json())
-      .then(setProducts)
-      .catch(() => toast.error("Failed to load products"))
-
     fetch("/api/goods-in")
       .then((r) => r.json())
       .then(setEntries)
-      .catch(() => toast.error("Failed to load goods in log"))
+      .catch(() => toast.error("Failed to load goods‑in log"))
   }, [])
 
   const handleAdd = async () => {
-    if (!barcode || !quantity) {
+    if (!barcode || quantity < 1) {
       return toast.error("Scan or enter a barcode and quantity")
     }
     const res = await fetch("/api/goods-in", {
@@ -73,11 +60,10 @@ export default function GoodsInPage() {
       animate={{ opacity: 1 }}
       className="space-y-8 pb-8"
     >
-      {/* Form */}
+      {/* Goods In Form */}
       <Card>
         <h2 className="text-xl font-semibold mb-4">Goods In</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Barcode input + scanner */}
           <div className="md:col-span-2">
             <label className="block text-sm font-medium mb-1">Barcode</label>
             <div className="flex">
@@ -100,7 +86,6 @@ export default function GoodsInPage() {
             </div>
           </div>
 
-          {/* Quantity */}
           <div>
             <label className="block text-sm font-medium mb-1">Quantity</label>
             <input
@@ -127,7 +112,7 @@ export default function GoodsInPage() {
 
       {/* Recent Entries */}
       <Card>
-        <h3 className="text-lg font-semibold mb-3">Recent Goods In</h3>
+        <h3 className="text-lg font-semibold mb-3">Recent Goods In</h3>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
