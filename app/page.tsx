@@ -4,7 +4,10 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Package, Truck, ClipboardList } from "lucide-react"
+
+import { QuickActions } from "@/components/QuickActions"
 import { IncomingSummary } from "@/components/IncomingSummary"
+import { DispatchedSummary } from "@/components/DispatchedSummary"
 
 interface IncomingItem {
   id: string
@@ -13,28 +16,38 @@ interface IncomingItem {
   qty: number
 }
 
+interface Dispatch {
+  id: string
+  timestamp: string
+}
+
 export default function DashboardPage() {
   const [stockOnHand, setStockOnHand] = useState<number | null>(null)
   const [incoming, setIncoming] = useState<IncomingItem[]>([])
-  const [dispatchedToday, setDispatchedToday] = useState<number | null>(null)
+  const [dispatched, setDispatched] = useState<Dispatch[]>([])
 
+  // Fetch all data on mount
   useEffect(() => {
+    // 1) Stock on hand
     fetch("/api/stock-summary")
       .then((r) => r.json())
       .then((data) => setStockOnHand(data.totalOnHand))
       .catch(() => setStockOnHand(0))
 
+    // 2) Incoming shipments
     fetch("/api/incoming-stock")
       .then((r) => r.json())
       .then(setIncoming)
       .catch(() => setIncoming([]))
 
-    fetch("/api/goods-out/today-count")
+    // 3) Dispatches today
+    fetch("/api/goods-out/today")
       .then((r) => r.json())
-      .then((data) => setDispatchedToday(data.count))
-      .catch(() => setDispatchedToday(0))
+      .then(setDispatched)
+      .catch(() => setDispatched([]))
   }, [])
 
+  // Prepare the three top‐level summary cards
   const cards = [
     {
       title: "Stock On Hand",
@@ -48,7 +61,7 @@ export default function DashboardPage() {
     },
     {
       title: "Dispatched Today",
-      value: dispatchedToday !== null ? dispatchedToday : "…",
+      value: dispatched.length,
       icon: <ClipboardList size={28} className="text-rose-500" />,
     },
   ]
@@ -58,13 +71,17 @@ export default function DashboardPage() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="space-y-10 py-8"
+      className="space-y-10 py-8 px-4 md:px-8"
     >
-      <h2 className="text-3xl font-bold tracking-tight text-blue-400 mb-8">
+      {/* Page title */}
+      <h2 className="text-3xl font-bold tracking-tight text-blue-400">
         Bee4 Stock Dashboard
       </h2>
 
-      {/* Summary cards */}
+      {/* Quick‑action buttons */}
+      <QuickActions />
+
+      {/* Top summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {cards.map((card, i) => (
           <motion.div
@@ -81,13 +98,21 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Incoming Shipments summary & details */}
-      <IncomingSummary
-        details={incoming.map((i) => ({
-          timestamp: i.timestamp,
-          qty: i.qty,
-        }))}
-      />
+      {/* Detailed summaries in accordions */}
+      <div className="space-y-6">
+        <IncomingSummary
+          details={incoming.map((i) => ({
+            timestamp: i.timestamp,
+            qty: i.qty,
+          }))}
+        />
+
+        <DispatchedSummary
+          details={dispatched.map((d) => ({
+            timestamp: d.timestamp,
+          }))}
+        />
+      </div>
     </motion.div>
   )
 }
