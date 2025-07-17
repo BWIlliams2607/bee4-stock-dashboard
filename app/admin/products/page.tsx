@@ -45,7 +45,7 @@ export default function ProductAdminPage() {
   const [scannerOpen, setScannerOpen] = useState(false)
   const barcodeRef = useRef<HTMLInputElement>(null)
 
-  // initial fetch
+  // fetch on mount
   useEffect(() => {
     fetch("/api/categories")
       .then((r) => r.json())
@@ -112,6 +112,12 @@ export default function ProductAdminPage() {
     setNewProdCats([])
     toast.success("Product added")
     barcodeRef.current?.focus()
+  }
+
+  // remove product (client-side soft delete)
+  const handleRemove = (idToRemove: number) => {
+    setProducts((prev) => prev.filter((p) => p.id !== idToRemove))
+    toast.success("Product removed locally. (Server delete pending.)")
   }
 
   return (
@@ -209,9 +215,7 @@ export default function ProductAdminPage() {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Description
-            </label>
+            <label className="block text-sm font-medium mb-1">Description</label>
             <input
               type="text"
               value={newProdDesc}
@@ -223,9 +227,7 @@ export default function ProductAdminPage() {
 
           {/* Categories Multi-select */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Categories
-            </label>
+            <label className="block text-sm font-medium mb-1">Categories</label>
             <Combobox
               value={newProdCats}
               onChange={setNewProdCats}
@@ -318,19 +320,9 @@ export default function ProductAdminPage() {
                   <td className="p-2 flex gap-2">
                     {/* Delete */}
                     <button
-                      onClick={async () => {
+                      onClick={() => {
                         if (!confirm("Delete this product?")) return
-                        const res = await fetch(`/api/products/${p.id}`, {
-                          method: "DELETE",
-                        })
-                        if (res.ok) {
-                          setProducts((list) =>
-                            list.filter((x) => x.id !== p.id)
-                          )
-                          toast.success("Deleted")
-                        } else {
-                          toast.error("Delete failed")
-                        }
+                        handleRemove(p.id)
                       }}
                       className="text-rose-500 hover:text-rose-700"
                       title="Delete"
@@ -338,7 +330,7 @@ export default function ProductAdminPage() {
                       <Trash2 size={16} />
                     </button>
 
-                    {/* Edit (name only) */}
+                    {/* Edit */}
                     <button
                       onClick={async () => {
                         const newName = prompt("New name", p.name)
