@@ -2,7 +2,8 @@
 /** @type {import('postcss-load-config').Config} */
 module.exports = {
   plugins: {
-    tailwindcss: {},
+    // <-- New package instead of `tailwindcss`
+    '@tailwindcss/postcss': {},
     autoprefixer: {},
   },
 }
