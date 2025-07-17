@@ -43,7 +43,6 @@ export default function OrderRequestsPage() {
       notes,
     }
 
-    // Send to our API (which dispatches via Mailgun)
     try {
       const res = await fetch("/api/order-requests", {
         method: "POST",
@@ -52,15 +51,13 @@ export default function OrderRequestsPage() {
       })
       if (!res.ok) throw new Error("Failed to send email")
       toast.success("Order request emailed and logged!")
-    } catch (err: any) {
+    } catch (err) {
       console.error(err)
-      toast.error("Email failed—request still logged locally.")
+      const message = err instanceof Error ? err.message : "Unknown error"
+      toast.error(`Email failed—request still logged: ${message}`)
     }
 
-    // Add to on-screen log
     setLog([entry, ...log])
-
-    // Reset form
     setItem("")
     setQuantity("")
     setLocation("")
@@ -77,7 +74,6 @@ export default function OrderRequestsPage() {
       transition={{ duration: 0.4 }}
       className="space-y-12"
     >
-      {/* Header */}
       <div className="flex items-center gap-3 mb-2">
         <span className="rounded-lg bg-yellow-600/90 text-white p-2 shadow-sm">
           <CheckCircle size={22} />
@@ -87,12 +83,10 @@ export default function OrderRequestsPage() {
         </h2>
       </div>
 
-      {/* Request Form */}
       <form
         onSubmit={handleSubmit}
         className="max-w-3xl mx-auto bg-muted/70 shadow-xl rounded-2xl p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6"
       >
-        {/* Left Column */}
         <div className="space-y-4">
           <div className="flex flex-col">
             <label className="text-sm font-semibold">Item Description</label>
@@ -129,7 +123,7 @@ export default function OrderRequestsPage() {
             />
           </div>
         </div>
-        {/* Right Column */}
+
         <div className="space-y-4">
           <div className="flex flex-col">
             <label className="text-sm font-semibold">Priority</label>
@@ -172,7 +166,6 @@ export default function OrderRequestsPage() {
         </div>
       </form>
 
-      {/* Request Log */}
       <div className="max-w-3xl mx-auto bg-muted/70 shadow-xl rounded-2xl p-6 md:p-8">
         <h3 className="text-lg font-bold mb-2">Request Log</h3>
         <div className="overflow-x-auto rounded-lg">
