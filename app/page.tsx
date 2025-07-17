@@ -1,29 +1,21 @@
+// app/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Package, Truck, ClipboardList } from "lucide-react"
-
-type Incoming = {
-  id: string
-  timestamp: string
-  barcode: string
-  product: string
-  qty: number
-}
+import { IncomingCard, IncomingItem } from "@/components/IncomingCard"
 
 export default function DashboardPage() {
   const [stockOnHand, setStockOnHand] = useState<number | null>(null)
-  const [incoming, setIncoming] = useState<Incoming[]>([])
+  const [incoming, setIncoming] = useState<IncomingItem[]>([])
   const [dispatchedToday, setDispatchedToday] = useState<number | null>(null)
 
-  // Fetch dynamic data on mount
+  // Fetch all data on mount
   useEffect(() => {
     fetch("/api/stock-summary")
       .then((r) => r.json())
-      .then((data) => {
-        setStockOnHand(data.totalOnHand)
-      })
+      .then((data) => setStockOnHand(data.totalOnHand))
       .catch(() => setStockOnHand(0))
 
     fetch("/api/incoming-stock")
@@ -36,6 +28,17 @@ export default function DashboardPage() {
       .then((data) => setDispatchedToday(data.count))
       .catch(() => setDispatchedToday(0))
   }, [])
+
+  // Handlers for edit/delete
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/incoming-stock/${id}`, { method: "DELETE" })
+    setIncoming((list) => list.filter((i) => i.id !== id))
+  }
+
+  const handleEdit = (item: IncomingItem) => {
+    // TODO: open an edit modal or inline form
+    alert(`Edit not implemented yet for ${item.product}`)
+  }
 
   const cards = [
     {
@@ -60,13 +63,13 @@ export default function DashboardPage() {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="space-y-10"
+      className="space-y-10 py-8"
     >
-      <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-8">
+      <h2 className="text-3xl font-bold tracking-tight text-blue-400 mb-8">
         Bee4 Stock Dashboard
       </h2>
 
-      {/* Cards */}
+      {/* Top summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {cards.map((card, i) => (
           <motion.div
@@ -83,41 +86,30 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Incoming Details Panel */}
+      {/* Incoming Shipments Details */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="bg-muted/70 p-6 rounded-2xl shadow-soft"
+        className="bg-muted/70 p-6 rounded-2xl shadow-soft space-y-4"
       >
-        <div className="flex items-center mb-4 space-x-2">
+        <div className="flex items-center space-x-2 mb-4">
           <Truck className="w-5 h-5 text-yellow-400" />
           <h3 className="text-lg font-semibold">Incoming Shipments Details</h3>
         </div>
+
         {incoming.length > 0 ? (
-          <ul className="space-y-3">
-            {incoming.slice(0, 5).map((i) => (
-              <li
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {incoming.slice(0, 6).map((i) => (
+              <IncomingCard
                 key={i.id}
-                className="flex justify-between items-center p-3 bg-background/50 rounded-lg"
-              >
-                <div className="space-y-1">
-                  <div className="font-medium">{i.product}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(i.timestamp).toLocaleString(undefined, {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </div>
-                </div>
-                <div className="text-xl font-bold">×{i.qty}</div>
-              </li>
+                item={i}
+                onDelete={handleDelete}
+                onEdit={handleEdit}
+              />
             ))}
-          </ul>
+          </div>
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-center text-sm text-muted-foreground">
             No incoming shipments at the moment.
           </p>
         )}
