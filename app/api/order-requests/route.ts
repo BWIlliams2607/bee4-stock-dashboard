@@ -1,18 +1,9 @@
 // app/api/order-requests/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
-// @ts-expect-error no type declarations for nodemailer
-import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT),
-  secure: Number(process.env.SMTP_PORT) === 465,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,8 +17,11 @@ export async function POST(req: NextRequest) {
       notes,
     } = await req.json();
 
-    const subject = `📝 New Order Request: ${item}`;
-    const text = `
+    const msg = {
+      to: process.env.OFFICE_EMAIL!,
+      from: process.env.FROM_EMAIL!,
+      subject: `📝 New Order Request: ${item}`,
+      text: `
 Time: ${timestamp}
 Item: ${item}
 Category: ${category}
@@ -35,18 +29,13 @@ Quantity: ${quantity}
 Priority: ${priority}
 Location: ${location}
 Notes: ${notes || "(none)"}
-    `;
+      `,
+    };
 
-    await transporter.sendMail({
-      from: process.env.FROM_EMAIL,
-      to: process.env.OFFICE_EMAIL,
-      subject,
-      text,
-    });
-
+    await sgMail.send(msg);
     return NextResponse.json({ success: true });
   } catch (err: unknown) {
-    console.error("SMTP error:", err);
+    console.error("SendGrid error:", err);
     const message =
       err instanceof Error
         ? err.message

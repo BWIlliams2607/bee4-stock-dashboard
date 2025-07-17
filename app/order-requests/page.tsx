@@ -1,210 +1,209 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { CheckCircle } from "lucide-react"
-import { Button } from "@/components/button"
+import { Check, Clock, FileText } from "lucide-react"
 import { toast } from "sonner"
+import { MotionButton } from "@/components/button"
 
-type OrderRequestLog = {
+type Request = {
+  id: string
   timestamp: string
   item: string
-  category: "Materials" | "Maintenance"
-  quantity: string
-  priority: "Low" | "Medium" | "High"
+  category: string
+  quantity: number
+  priority: string
   location: string
-  notes: string
+  notes?: string
 }
 
 export default function OrderRequestsPage() {
   const [item, setItem] = useState("")
-  const [category, setCategory] = useState<OrderRequestLog["category"]>("Materials")
-  const [quantity, setQuantity] = useState("")
-  const [priority, setPriority] = useState<OrderRequestLog["priority"]>("Low")
+  const [category, setCategory] = useState("")
+  const [quantity, setQuantity] = useState<number | "">("")
+  const [priority, setPriority] = useState("")
   const [location, setLocation] = useState("")
   const [notes, setNotes] = useState("")
-  const [log, setLog] = useState<OrderRequestLog[]>([])
-  const itemInputRef = useRef<HTMLInputElement>(null)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!item || !quantity || !location) {
-      toast.error("Please fill item, quantity, and location")
-      return
+  const [requests, setRequests] = useState<Request[]>([])
+  const [submitting, setSubmitting] = useState(false)
+
+  // fetch existing logs
+  useEffect(() => {
+    fetch("/api/order-requests")
+      .then((r) => r.json())
+      .then(setRequests)
+      .catch(() => toast.error("Failed to load request log"))
+  }, [])
+
+  const handleSubmit = async () => {
+    if (!item || !category || !quantity || !priority || !location) {
+      return toast.error("Please fill in all required fields")
     }
-
-    const entry: OrderRequestLog = {
-      timestamp: new Date().toLocaleString(),
-      item,
-      category,
-      quantity,
-      priority,
-      location,
-      notes,
+    setSubmitting(true)
+    const timestamp = new Date().toISOString()
+    const body = { timestamp, item, category, quantity, priority, location, notes }
+    const res = await fetch("/api/order-requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    })
+    if (res.ok) {
+      const saved = await res.json()
+      setRequests((r) => [{ id: saved.id, ...body }, ...r])
+      toast.success("Order request sent and logged!")
+      // reset form
+      setItem("")
+      setCategory("")
+      setQuantity("")
+      setPriority("")
+      setLocation("")
+      setNotes("")
+    } else {
+      const err = await res.json()
+      toast.error(`Email failed—request still logged: ${err.error}`)
     }
-
-    try {
-      const res = await fetch("/api/order-requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(entry),
-      })
-      if (!res.ok) throw new Error("Failed to send email")
-      toast.success("Order request emailed and logged!")
-    } catch (err) {
-      console.error(err)
-      const message = err instanceof Error ? err.message : "Unknown error"
-      toast.error(`Email failed—request still logged: ${message}`)
-    }
-
-    setLog([entry, ...log])
-    setItem("")
-    setQuantity("")
-    setLocation("")
-    setNotes("")
-    setCategory("Materials")
-    setPriority("Low")
-    itemInputRef.current?.focus()
+    setSubmitting(false)
   }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="space-y-12"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-8 max-w-5xl mx-auto py-8"
     >
-      <div className="flex items-center gap-3 mb-2">
-        <span className="rounded-lg bg-yellow-600/90 text-white p-2 shadow-sm">
-          <CheckCircle size={22} />
-        </span>
-        <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-          Order Requests
-        </h2>
-      </div>
+      <header className="flex items-center space-x-2">
+        <FileText className="w-6 h-6 text-emerald-400" />
+        <h1 className="text-2xl font-bold">Order Requests</h1>
+      </header>
 
-      <form
-        onSubmit={handleSubmit}
-        className="max-w-3xl mx-auto bg-muted/70 shadow-xl rounded-2xl p-6 md:p-8 grid grid-cols-1 md:grid-cols-2 gap-6"
-      >
+      <section className="bg-muted/70 p-6 rounded-2xl shadow-soft grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left column */}
         <div className="space-y-4">
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold">Item Description</label>
-            <input
-              required
-              ref={itemInputRef}
-              value={item}
-              onChange={(e) => setItem(e.target.value)}
-              placeholder="E.g. Printer Toner, Safety Gloves"
-              className="px-4 py-2 rounded-lg bg-background text-foreground border border-border"
-            />
-          </div>
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold">Category</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value as OrderRequestLog["category"])}
-              className="px-4 py-2 rounded-lg bg-background text-foreground border border-border"
-            >
-              <option>Materials</option>
-              <option>Maintenance</option>
-            </select>
-          </div>
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold">Quantity</label>
-            <input
-              required
-              type="number"
-              min="1"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              placeholder="Enter quantity"
-              className="px-4 py-2 rounded-lg bg-background text-foreground border border-border"
-            />
-          </div>
+          <label className="block text-sm font-medium">Item Description</label>
+          <input
+            type="text"
+            value={item}
+            onChange={(e) => setItem(e.target.value)}
+            placeholder="What do you need?"
+            className="w-full rounded-lg border border-border bg-input px-4 py-2 text-sm"
+            disabled={submitting}
+          />
+
+          <label className="block text-sm font-medium">Category</label>
+          <input
+            type="text"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            placeholder="e.g. Materials, Maintenance"
+            className="w-full rounded-lg border border-border bg-input px-4 py-2 text-sm"
+            disabled={submitting}
+          />
+
+          <label className="block text-sm font-medium">Quantity</label>
+          <input
+            type="number"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value === "" ? "" : Number(e.target.value))}
+            placeholder="e.g. 10"
+            className="w-full rounded-lg border border-border bg-input px-4 py-2 text-sm"
+            disabled={submitting}
+          />
         </div>
 
+        {/* Right column */}
         <div className="space-y-4">
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold">Priority</label>
-            <select
-              value={priority}
-              onChange={(e) => setPriority(e.target.value as OrderRequestLog["priority"])}
-              className="px-4 py-2 rounded-lg bg-background text-foreground border border-border"
-            >
-              <option>Low</option>
-              <option>Medium</option>
-              <option>High</option>
-            </select>
-          </div>
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold">Location</label>
-            <input
-              required
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="Warehouse 1, Line A"
-              className="px-4 py-2 rounded-lg bg-background text-foreground border border-border"
-            />
-          </div>
-          <div className="flex flex-col">
-            <label className="text-sm font-semibold">Additional Notes</label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Any extra details..."
-              className="px-4 py-2 rounded-lg bg-background text-foreground border border-border resize-none"
-              rows={3}
-            />
-          </div>
+          <label className="block text-sm font-medium">Priority</label>
+          <input
+            type="text"
+            value={priority}
+            onChange={(e) => setPriority(e.target.value)}
+            placeholder="e.g. Low, Medium, High"
+            className="w-full rounded-lg border border-border bg-input px-4 py-2 text-sm"
+            disabled={submitting}
+          />
+
+          <label className="block text-sm font-medium">Location</label>
+          <input
+            type="text"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="Where should it go?"
+            className="w-full rounded-lg border border-border bg-input px-4 py-2 text-sm"
+            disabled={submitting}
+          />
+
+          <label className="block text-sm font-medium">Additional Notes</label>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Any extra details…"
+            className="w-full rounded-lg border border-border bg-input px-4 py-2 text-sm h-24 resize-none"
+            disabled={submitting}
+          />
         </div>
 
-        <div className="md:col-span-2 flex justify-end">
-          <Button type="submit" className="flex items-center gap-2">
-            Submit Request <CheckCircle size={20} />
-          </Button>
+        {/* Submit button spans full width */}
+        <div className="lg:col-span-2 flex justify-end">
+          <MotionButton
+            onClick={handleSubmit}
+            disabled={submitting}
+            whileHover={{ scale: submitting ? 1 : 1.02 }}
+            whileTap={{ scale: submitting ? 1 : 0.98 }}
+            className="bg-blue-600 disabled:opacity-50 text-white hover:bg-blue-700 flex items-center gap-2 px-6 py-3 rounded-lg"
+          >
+            {submitting ? <Clock className="animate-spin w-5 h-5" /> : <Check className="w-5 h-5" />}
+            <span>{submitting ? "Submitting…" : "Submit Request"}</span>
+          </MotionButton>
         </div>
-      </form>
+      </section>
 
-      <div className="max-w-3xl mx-auto bg-muted/70 shadow-xl rounded-2xl p-6 md:p-8">
-        <h3 className="text-lg font-bold mb-2">Request Log</h3>
-        <div className="overflow-x-auto rounded-lg">
-          <table className="min-w-full text-xs">
+      {/* Request Log */}
+      <section>
+        <h2 className="text-lg font-semibold mb-4">Request Log</h2>
+        <div className="overflow-x-auto bg-muted/70 p-4 rounded-2xl shadow-soft">
+          <table className="min-w-full text-sm">
             <thead>
               <tr className="border-b border-border">
-                <th className="p-2 text-left">Time</th>
-                <th className="p-2 text-left">Item</th>
-                <th className="p-2 text-left">Category</th>
-                <th className="p-2 text-left">Qty</th>
-                <th className="p-2 text-left">Priority</th>
-                <th className="p-2 text-left">Location</th>
-                <th className="p-2 text-left">Notes</th>
+                {["Time", "Item", "Category", "Qty", "Priority", "Location", "Notes"].map((h) => (
+                  <th key={h} className="p-2 text-left">
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {log.length === 0 ? (
+              {requests.map((r) => (
+                <tr key={r.id} className="border-b hover:bg-muted/50 transition">
+                  <td className="p-2">
+                    {new Date(r.timestamp).toLocaleString(undefined, {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    })}
+                  </td>
+                  <td className="p-2">{r.item}</td>
+                  <td className="p-2">{r.category}</td>
+                  <td className="p-2">{r.quantity}</td>
+                  <td className="p-2">{r.priority}</td>
+                  <td className="p-2">{r.location}</td>
+                  <td className="p-2">{r.notes || "—"}</td>
+                </tr>
+              ))}
+              {requests.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="p-3 text-center text-muted-foreground">
+                  <td colSpan={7} className="p-4 text-center text-muted-foreground">
                     No requests yet
                   </td>
                 </tr>
-              ) : (
-                log.map((row, i) => (
-                  <tr key={i} className="border-b border-border hover:bg-background/80">
-                    <td className="p-2">{row.timestamp}</td>
-                    <td className="p-2">{row.item}</td>
-                    <td className="p-2">{row.category}</td>
-                    <td className="p-2">{row.quantity}</td>
-                    <td className="p-2">{row.priority}</td>
-                    <td className="p-2">{row.location}</td>
-                    <td className="p-2">{row.notes}</td>
-                  </tr>
-                ))
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </motion.div>
   )
 }
