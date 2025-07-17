@@ -1,3 +1,5 @@
+// app/api/order-requests/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 
@@ -13,7 +15,15 @@ const transporter = nodemailer.createTransport({
 
 export async function POST(req: NextRequest) {
   try {
-    const { timestamp, item, category, quantity, priority, location, notes } = await req.json();
+    const {
+      timestamp,
+      item,
+      category,
+      quantity,
+      priority,
+      location,
+      notes,
+    } = await req.json();
 
     const subject = `📝 New Order Request: ${item}`;
     const text = `
@@ -34,8 +44,14 @@ Notes: ${notes || "(none)"}
     });
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("SMTP error:", err);
-    return NextResponse.json({ error: err.message ?? "Unknown error" }, { status: 500 });
+    const message =
+      err instanceof Error
+        ? err.message
+        : typeof err === "string"
+        ? err
+        : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
