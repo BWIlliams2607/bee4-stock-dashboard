@@ -1,4 +1,3 @@
-// tailwind.config.ts
 import type { Config } from "tailwindcss";
 
 const config: Config = {
@@ -6,7 +5,6 @@ const config: Config = {
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
-    // add any other dirs with JSX/TSX
   ],
   theme: {
     extend: {
