@@ -1,42 +1,28 @@
-// app/api/products/[id]/route.ts
-import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma"; // adjust import path to your Prisma client
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  const id = Number(params.id)
-  try {
-    await prisma.product.delete({ where: { id } })
-    return NextResponse.json({ success: true })
-  } catch {
-    return NextResponse.json({ error: "Delete failed" }, { status: 400 })
-  }
+interface Params {
+  params: {
+    id: string;
+  };
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
+export async function DELETE(
+  request: NextRequest,
+  { params }: Params
 ) {
-  const id = Number(params.id)
-  const { name, description, categoryIds } = await request.json()
+  const { id } = params;
+
   try {
-    const updated = await prisma.product.update({
+    const deleted = await prisma.product.delete({
       where: { id },
-      data: {
-        name,
-        description,
-        categories: {
-          set: Array.isArray(categoryIds)
-            ? categoryIds.map((cid: number) => ({ id: cid }))
-            : [],
-        },
-      },
-      include: { categories: true },
-    })
-    return NextResponse.json(updated)
-  } catch {
-    return NextResponse.json({ error: "Update failed" }, { status: 400 })
+    });
+    return NextResponse.json(deleted, { status: 200 });
+  } catch (error) {
+    console.error("DELETE /api/products/[id] error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete product" },
+      { status: 500 }
+    );
   }
 }
