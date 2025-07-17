@@ -4,14 +4,20 @@
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Package, Truck, ClipboardList } from "lucide-react"
-import { IncomingCard, IncomingItem } from "@/components/IncomingCard"
+import { IncomingSummary } from "@/components/IncomingSummary"
+
+interface IncomingItem {
+  id: string
+  timestamp: string
+  product: string
+  qty: number
+}
 
 export default function DashboardPage() {
   const [stockOnHand, setStockOnHand] = useState<number | null>(null)
   const [incoming, setIncoming] = useState<IncomingItem[]>([])
   const [dispatchedToday, setDispatchedToday] = useState<number | null>(null)
 
-  // Fetch all data on mount
   useEffect(() => {
     fetch("/api/stock-summary")
       .then((r) => r.json())
@@ -28,17 +34,6 @@ export default function DashboardPage() {
       .then((data) => setDispatchedToday(data.count))
       .catch(() => setDispatchedToday(0))
   }, [])
-
-  // Handlers for edit/delete
-  const handleDelete = async (id: string) => {
-    await fetch(`/api/incoming-stock/${id}`, { method: "DELETE" })
-    setIncoming((list) => list.filter((i) => i.id !== id))
-  }
-
-  const handleEdit = (item: IncomingItem) => {
-    // TODO: open an edit modal or inline form
-    alert(`Edit not implemented yet for ${item.product}`)
-  }
 
   const cards = [
     {
@@ -69,7 +64,7 @@ export default function DashboardPage() {
         Bee4 Stock Dashboard
       </h2>
 
-      {/* Top summary cards */}
+      {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
         {cards.map((card, i) => (
           <motion.div
@@ -79,41 +74,20 @@ export default function DashboardPage() {
             transition={{ delay: i * 0.15 }}
             className="bg-muted/70 shadow-xl rounded-2xl p-8 flex flex-col items-center justify-center"
           >
-            <div>{card.icon}</div>
+            {card.icon}
             <div className="mt-2 text-4xl font-bold">{card.value}</div>
             <div className="mt-2 text-md text-muted-foreground">{card.title}</div>
           </motion.div>
         ))}
       </div>
 
-      {/* Incoming Shipments Details */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="bg-muted/70 p-6 rounded-2xl shadow-soft space-y-4"
-      >
-        <div className="flex items-center space-x-2 mb-4">
-          <Truck className="w-5 h-5 text-yellow-400" />
-          <h3 className="text-lg font-semibold">Incoming Shipments Details</h3>
-        </div>
-
-        {incoming.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {incoming.slice(0, 6).map((i) => (
-              <IncomingCard
-                key={i.id}
-                item={i}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="text-center text-sm text-muted-foreground">
-            No incoming shipments at the moment.
-          </p>
-        )}
-      </motion.div>
+      {/* Incoming Shipments summary & details */}
+      <IncomingSummary
+        details={incoming.map((i) => ({
+          timestamp: i.timestamp,
+          qty: i.qty,
+        }))}
+      />
     </motion.div>
   )
 }
