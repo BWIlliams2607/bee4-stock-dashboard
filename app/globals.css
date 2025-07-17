@@ -1,26 +1,26 @@
-@import "tailwindcss";
+/* globals.css */
 
+/* 1) Tailwind base, components, utilities */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 2) Override your CSS variables (if you need them) */
 :root {
   --background: #171717;
   --foreground: #ffffff;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #0a0a0a;
+    --foreground: #ffffff;  /* keep text white */
   }
 }
 
+/* 3) Your grid backdrop _after_ Tailwind’s base */
 body {
-  background-color: #0f1115;
+  background-color: var(--background);
   background-image:
     linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
