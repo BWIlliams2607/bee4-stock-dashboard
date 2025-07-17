@@ -9,6 +9,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Goods In Log
 model GoodsInLog {
   id        Int      @id @default(autoincrement())
   timestamp DateTime @default(now())
@@ -22,6 +23,7 @@ model GoodsInLog {
   @@map("goods_in_logs")
 }
 
+// Goods Out Log
 model GoodsOutLog {
   id        Int      @id @default(autoincrement())
   timestamp DateTime @default(now())
@@ -35,6 +37,7 @@ model GoodsOutLog {
   @@map("goods_out_logs")
 }
 
+// Incoming Stock Log
 model IncomingStockLog {
   id           Int      @id @default(autoincrement())
   timestamp    DateTime @default(now())
@@ -48,25 +51,27 @@ model IncomingStockLog {
   @@map("incoming_stock_logs")
 }
 
+// Products
 model Product {
-  id          Int        @id @default(autoincrement())
-  barcode     String     @unique
+  id          Int         @id @default(autoincrement())
+  barcode     String      @unique
   name        String
   description String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
-  // implicit many-to-many relation to Category
+  // Many-to-many relation to Category
   categories  Category[]
 
   @@map("products")
 }
 
+// Categories
 model Category {
   id       Int       @id @default(autoincrement())
   name     String    @unique
 
-  // implicit many-to-many relation to Product
+  // Many-to-many relation to Product
   products Product[]
 
   @@map("categories")

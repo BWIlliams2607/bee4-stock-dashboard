@@ -5,7 +5,14 @@ import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { useState } from "react"
 import {
-  Menu, X, Home, Package, PackageMinus, Truck, Settings
+  Menu,
+  X,
+  Home,
+  Package,
+  PackageMinus,
+  Truck,
+  Settings,
+  ClipboardList,
 } from "lucide-react"
 
 const navSections = [
@@ -14,7 +21,13 @@ const navSections = [
     links: [
       { name: "Dashboard", href: "/", icon: <Home size={18} /> },
       { name: "Stock Summary", href: "/stock-summary", icon: <Package size={18} /> },
-    ]
+    ],
+  },
+  {
+    label: "Requests",
+    links: [
+      { name: "Order Requests", href: "/order-requests", icon: <ClipboardList size={18} /> },
+    ],
   },
   {
     label: "Transactions",
@@ -22,22 +35,21 @@ const navSections = [
       { name: "Goods In", href: "/goods-in", icon: <Package size={18} /> },
       { name: "Goods Out", href: "/goods-out", icon: <PackageMinus size={18} /> },
       { name: "Incoming Stock", href: "/incoming-stock", icon: <Truck size={18} /> },
-    ]
+    ],
   },
   {
     label: "Admin",
     links: [
       { name: "Product Admin", href: "/admin/products", icon: <Settings size={18} /> },
       { name: "Settings", href: "/settings", icon: <Settings size={18} /> },
-    ]
-  }
+    ],
+  },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
-  // For mobile: slide-in/out
   return (
     <>
       {/* Desktop Sidebar */}
@@ -48,13 +60,11 @@ export function Sidebar() {
         <nav className="flex-1 flex flex-col gap-4 mt-6">
           {navSections.map((section, idx) => (
             <div key={section.label}>
-              {idx !== 0 && (
-                <div className="border-t border-border my-3" />
-              )}
+              {idx !== 0 && <div className="border-t border-border my-3" />}
               <div className="uppercase text-xs text-muted-foreground font-semibold px-6 py-1 tracking-wider">
                 {section.label}
               </div>
-              {section.links.map(link => (
+              {section.links.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -78,11 +88,9 @@ export function Sidebar() {
         </nav>
       </aside>
 
-      {/* Mobile: hamburger + slide-in */}
+      {/* Mobile Sidebar */}
       <div className="md:hidden flex items-center h-16 px-4 bg-background border-b border-border z-20">
-        <div className="font-bold text-lg tracking-tight flex-1">
-          Bee4 Stock
-        </div>
+        <div className="font-bold text-lg tracking-tight flex-1">Bee4 Stock</div>
         <button
           className="p-2 text-muted-foreground"
           onClick={() => setOpen(true)}
@@ -106,7 +114,7 @@ export function Sidebar() {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="h-16 flex items-center px-6 font-bold text-lg">
                 Bee4 Stock
@@ -120,13 +128,11 @@ export function Sidebar() {
               <nav className="flex-1 flex flex-col gap-4 mt-4">
                 {navSections.map((section, idx) => (
                   <div key={section.label}>
-                    {idx !== 0 && (
-                      <div className="border-t border-border my-3" />
-                    )}
+                    {idx !== 0 && <div className="border-t border-border my-3" />}
                     <div className="uppercase text-xs text-muted-foreground font-semibold px-6 py-1 tracking-wider">
                       {section.label}
                     </div>
-                    {section.links.map(link => (
+                    {section.links.map((link) => (
                       <Link
                         key={link.href}
                         href={link.href}
