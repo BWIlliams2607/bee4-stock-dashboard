@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import formData from "form-data";
+import * as MailgunNamespace from "mailgun.js";
 
-// Use require so TypeScript won’t treat Mailgun as a namespace rather than a callable constructor
-const Mailgun = require("mailgun.js");
-
+const Mailgun: any = MailgunNamespace; // cast to any to allow calling as a constructor
 const mgClient = new Mailgun(formData).client({
   username: "api",
   key: process.env.MAILGUN_API_KEY!,
