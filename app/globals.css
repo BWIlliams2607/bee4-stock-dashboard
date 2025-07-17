@@ -1,11 +1,11 @@
 /* globals.css */
 
-/* 1) Tailwind base, components, utilities */
+/* 1) Tailwind’s core layers */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 2) Override your CSS variables (if you need them) */
+/* 2) Your custom CSS variables for theming */
 :root {
   --background: #171717;
   --foreground: #ffffff;
@@ -14,13 +14,18 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ffffff;  /* keep text white */
+    --foreground: #ffffff;
   }
 }
 
-/* 3) Your grid backdrop _after_ Tailwind’s base */
-body {
+/* 3) Override Tailwind’s default colors to use your CSS vars */
+html {
   background-color: var(--background);
+  color: var(--foreground);
+}
+
+/* 4) Your subtle grid‑paper background, applied after everything else */
+body {
   background-image:
     linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
