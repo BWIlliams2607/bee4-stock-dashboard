@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import formData from "form-data";
 import * as MailgunNamespace from "mailgun.js";
 
-const Mailgun: any = MailgunNamespace; // cast to any to allow calling as a constructor
+// Allow this specific any for Mailgun’s namespace-to-constructor cast
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const Mailgun: any = MailgunNamespace;
+
 const mgClient = new Mailgun(formData).client({
   username: "api",
   key: process.env.MAILGUN_API_KEY!,
