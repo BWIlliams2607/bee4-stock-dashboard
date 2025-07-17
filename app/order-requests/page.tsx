@@ -26,12 +26,13 @@ export default function OrderRequestsPage() {
   const [log, setLog] = useState<OrderRequestLog[]>([])
   const itemInputRef = useRef<HTMLInputElement>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!item || !quantity || !location) {
       toast.error("Please fill item, quantity, and location")
       return
     }
+
     const entry: OrderRequestLog = {
       timestamp: new Date().toLocaleString(),
       item,
@@ -41,9 +42,25 @@ export default function OrderRequestsPage() {
       location,
       notes,
     }
+
+    // Send to our API (which dispatches via Mailgun)
+    try {
+      const res = await fetch("/api/order-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(entry),
+      })
+      if (!res.ok) throw new Error("Failed to send email")
+      toast.success("Order request emailed and logged!")
+    } catch (err: any) {
+      console.error(err)
+      toast.error("Email failed—request still logged locally.")
+    }
+
+    // Add to on-screen log
     setLog([entry, ...log])
-    toast.success("Order request submitted!")
-    // reset
+
+    // Reset form
     setItem("")
     setQuantity("")
     setLocation("")
@@ -60,6 +77,7 @@ export default function OrderRequestsPage() {
       transition={{ duration: 0.4 }}
       className="space-y-12"
     >
+      {/* Header */}
       <div className="flex items-center gap-3 mb-2">
         <span className="rounded-lg bg-yellow-600/90 text-white p-2 shadow-sm">
           <CheckCircle size={22} />
