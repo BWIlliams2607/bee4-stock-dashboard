@@ -1,43 +1,50 @@
-// app/api/products/[id]/route.ts
+// app/api/products/route.ts
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const id = Number(params.id)
-    const { barcode, name, description, categoryIds } = await req.json()
+interface CreateProductBody {
+  barcode: string
+  name: string
+  description?: string
+  categoryIds?: number[]
+}
 
-    if (!barcode || !name) {
-      return NextResponse.json(
-        { error: "Barcode and name are required" },
-        { status: 400 }
-      )
-    }
+export async function GET() {
+  const prods = await prisma.product.findMany({
+    include: { categories: true },
+    orderBy: { createdAt: "desc" },
+  })
+  return NextResponse.json(prods)
+}
 
-    const updated = await prisma.product.update({
-      where: { id },
-      data: {
-        barcode,
-        name,
-        description,
-        categories: {
-          set: Array.isArray(categoryIds)
-            ? categoryIds.map((cid: number) => ({ id: cid }))
-            : [],
-        },
-      },
-      include: { categories: true },
-    })
+export async function POST(request: Request) {
+  const {
+    barcode,
+    name,
+    description,
+    categoryIds,
+  } = (await request.json()) as CreateProductBody
 
-    return NextResponse.json(updated)
-  } catch (err: any) {
-    console.error("PATCH /api/products/[id] error:", err)
+  if (!barcode || !name) {
     return NextResponse.json(
-      { error: "Could not update product", detail: err.message },
-      { status: 500 }
+      { error: "Barcode and name are required" },
+      { status: 400 }
     )
   }
+
+  const ids = Array.isArray(categoryIds) ? categoryIds : []
+
+  const newProd = await prisma.product.create({
+    data: {
+      barcode,
+      name,
+      description,
+      categories: {
+        connect: ids.map((id) => ({ id })),
+      },
+    },
+    include: { categories: true },
+  })
+
+  return NextResponse.json(newProd)
 }
