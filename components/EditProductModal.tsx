@@ -27,17 +27,22 @@ export function EditProductModal({
 }: EditProductModalProps) {
   const [form, setForm] = useState<Product | null>(product)
 
-  // When the user switches to editing a different product, re‑init our form state
+  // Re‑initialize form whenever the `product` prop changes
   useEffect(() => {
     setForm(product)
   }, [product])
 
+  // If there's no form (i.e. no product selected), render nothing
   if (!form) return null
 
   async function handleSave() {
-    // You could also call your PATCH /api here,
-    // but we’ll just bubble it up via onSave for demo
+    // Guard against null once more for TS
+    if (!form) return
+
+    // Bubble up the fully‑populated Product
     onSave(form)
+
+    // Close the modal
     onClose()
   }
 
