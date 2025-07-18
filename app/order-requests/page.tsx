@@ -31,10 +31,12 @@ export default function OrderRequestsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
+  // fetch existing logs
   useEffect(() => {
     reload()
   }, [])
 
+  // helper to load the log
   async function reload() {
     try {
       const r = await fetch("/api/order-requests")
@@ -46,6 +48,7 @@ export default function OrderRequestsPage() {
     }
   }
 
+  // handle form submission
   const handleSubmit = async () => {
     if (!item || !category || !quantity || !priority || !location) {
       return toast.error("Please fill in all required fields")
@@ -62,12 +65,14 @@ export default function OrderRequestsPage() {
 
     if (res.ok) {
       toast.success("Order request sent and logged!")
+      // clear form
       setItem("")
       setCategory("")
       setQuantity("")
       setPriority("")
       setLocation("")
       setNotes("")
+      // reload the log
       reload()
     } else {
       const err = await res.json()
@@ -76,9 +81,12 @@ export default function OrderRequestsPage() {
     setSubmitting(false)
   }
 
-  const filtered = requests.filter(r =>
+  // filter helper
+  const filtered = requests.filter((r) =>
     [r.item, r.category, r.priority, r.location, r.notes || ""]
-      .some(field => field.toLowerCase().includes(searchTerm.trim().toLowerCase()))
+      .some((field) =>
+        field.toLowerCase().includes(searchTerm.trim().toLowerCase())
+      )
   )
 
   return (
@@ -87,67 +95,112 @@ export default function OrderRequestsPage() {
       animate={{ opacity: 1 }}
       className="space-y-10 max-w-6xl mx-auto py-10 px-4 md:px-0"
     >
+      {/* header */}
       <header className="flex items-center space-x-3 text-white">
         <FileText className="w-7 h-7 text-emerald-400" />
         <h1 className="text-3xl font-extrabold">Order Requests</h1>
       </header>
 
+      {/* form */}
       <section className="bg-gray-900 bg-opacity-70 p-8 rounded-3xl shadow-xl grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* left */}
         <div className="space-y-6">
-          {/** Labels and inputs have consistent spacing */}
-          {[
-            { label: "Item Description", value: item, setter: setItem, placeholder: "What do you need?" },
-            { label: "Category", value: category, setter: setCategory, placeholder: "e.g. Materials, Maintenance" },
-            { label: "Quantity", value: quantity, setter: (v) => setQuantity(v as any), placeholder: "e.g. 10", type: "number" },
-          ].map((field, idx) => (
-            <div key={idx} className="flex flex-col">
-              <label className="text-sm font-medium text-gray-300 mb-1">
-                {field.label}
-              </label>
-              <input
-                type={field.type || "text"}
-                value={field.value}
-                onChange={e => field.setter(field.type === "number" && e.target.value ? Number(e.target.value) : e.target.value)}
-                placeholder={field.placeholder}
-                disabled={submitting}
-                className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
-              />
-            </div>
-          ))}
+          {/* Item Description */}
+          <div className="flex flex-col">
+            <label className="text-sm font-medium text-gray-300 mb-1">
+              Item Description
+            </label>
+            <input
+              type="text"
+              value={item}
+              onChange={(e) => setItem(e.target.value)}
+              placeholder="What do you need?"
+              disabled={submitting}
+              className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+            />
+          </div>
+
+          {/* Category */}
+          <div className="flex flex-col">
+            <label className="text-sm font-medium text-gray-300 mb-1">
+              Category
+            </label>
+            <input
+              type="text"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="e.g. Materials, Maintenance"
+              disabled={submitting}
+              className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+            />
+          </div>
+
+          {/* Quantity */}
+          <div className="flex flex-col">
+            <label className="text-sm font-medium text-gray-300 mb-1">
+              Quantity
+            </label>
+            <input
+              type="number"
+              value={quantity}
+              onChange={(e) => {
+                const val = e.target.value
+                setQuantity(val === "" ? "" : Number(val))
+              }}
+              placeholder="e.g. 10"
+              disabled={submitting}
+              className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+            />
+          </div>
         </div>
 
+        {/* right */}
         <div className="space-y-6">
-          {[
-            { label: "Priority", value: priority, setter: setPriority, placeholder: "e.g. Low, Medium, High" },
-            { label: "Location", value: location, setter: setLocation, placeholder: "Where should it go?" },
-          ].map((field, idx) => (
-            <div key={idx} className="flex flex-col">
-              <label className="text-sm font-medium text-gray-300 mb-1">
-                {field.label}
-              </label>
-              <input
-                type="text"
-                value={field.value}
-                onChange={e => field.setter(e.target.value)}
-                placeholder={field.placeholder}
-                disabled={submitting}
-                className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
-              />
-            </div>
-          ))}
+          {/* Priority */}
+          <div className="flex flex-col">
+            <label className="text-sm font-medium text-gray-300 mb-1">
+              Priority
+            </label>
+            <input
+              type="text"
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              placeholder="e.g. Low, Medium, High"
+              disabled={submitting}
+              className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+            />
+          </div>
+
+          {/* Location */}
+          <div className="flex flex-col">
+            <label className="text-sm font-medium text-gray-300 mb-1">
+              Location
+            </label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Where should it go?"
+              disabled={submitting}
+              className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+            />
+          </div>
+
+          {/* Additional Notes */}
           <div className="flex flex-col col-span-1 md:col-span-2">
             <label className="text-sm font-medium text-gray-300 mb-1">
               Additional Notes
             </label>
             <textarea
               value={notes}
-              onChange={e => setNotes(e.target.value)}
+              onChange={(e) => setNotes(e.target.value)}
               placeholder="Any extra details…"
               disabled={submitting}
               className="w-full rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 h-28 resize-none placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
             />
           </div>
 
+          {/* submit */}
           <div className="col-span-1 md:col-span-2 flex justify-end">
             <MotionButton
               onClick={handleSubmit}
@@ -167,23 +220,25 @@ export default function OrderRequestsPage() {
         </div>
       </section>
 
+      {/* search */}
       <div className="flex justify-end">
         <input
           type="text"
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search log…"
           className="w-64 rounded-lg border border-gray-700 bg-gray-800 px-4 py-2 placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
         />
       </div>
 
+      {/* log */}
       <section>
         <h2 className="text-xl font-semibold text-white mb-4">Request Log</h2>
         <div className="overflow-x-auto bg-gray-900 p-6 rounded-3xl shadow-xl">
           <table className="min-w-full table-auto text-gray-100 text-sm">
             <thead>
               <tr className="border-b border-gray-700">
-                {["Time", "Item", "Category", "Qty", "Priority", "Location", "Notes"].map(h => (
+                {["Time", "Item", "Category", "Qty", "Priority", "Location", "Notes"].map((h) => (
                   <th key={h} className="p-3 text-left font-medium">
                     {h}
                   </th>
@@ -191,10 +246,13 @@ export default function OrderRequestsPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(r => (
-                <tr key={r.id} className="border-b border-gray-800 hover:bg-gray-800 transition">
+              {filtered.map((r) => (
+                <tr
+                  key={r.id}
+                  className="border-b border-gray-800 hover:bg-gray-800 transition"
+                >
                   <td className="p-3">
-                    {new Date(r.timestamp).toLocaleString(undefined, { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'})}
+                    {new Date(r.timestamp).toLocaleString(undefined, { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </td>
                   <td className="p-3">{r.item}</td>
                   <td className="p-3">{r.category}</td>
