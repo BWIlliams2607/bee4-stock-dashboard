@@ -1,10 +1,9 @@
-// app/admin/products/page.tsx
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import dynamic from "next/dynamic"
 import { Combobox } from "@headlessui/react"
 import { motion } from "framer-motion"
+import dynamic from "next/dynamic"
 import { toast } from "sonner"
 import { EditProductModal } from "@/components/EditProductModal"
 import { MotionButton } from "@/components/button"
@@ -17,9 +16,9 @@ import {
   X,
 } from "lucide-react"
 
-// dynamically load the scanner so it never runs on the server
-const BarcodeScanner = dynamic(
-  () => import("react-qr-barcode-scanner"),
+// dynamically load scanner so it only runs client-side
+const CameraBarcodeScanner = dynamic(
+  () => import("@/components/CameraBarcodeScanner").then((mod) => mod.CameraBarcodeScanner),
   { ssr: false }
 )
 
@@ -43,61 +42,6 @@ type EditPayload = {
   name: string
   description?: string
   categoryIds: number[]
-}
-
-// ─── Camera Scanner Modal ────────────────────────────────────────────────────────
-function CameraBarcodeScanner({
-  onDetected,
-  onClose,
-}: {
-  onDetected: (code: string) => void
-  onClose: () => void
-}) {
-  const [error, setError] = useState<string | null>(null)
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="relative bg-gray-800 rounded-xl shadow-2xl p-4 max-w-md w-full">
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-gray-300 hover:text-white"
-        >
-          <X size={20} />
-        </button>
-
-        <div className="flex items-center gap-2 mb-2 text-white text-lg font-bold">
-          <CameraIcon size={22} /> Scan Barcode
-        </div>
-
-        <div className="w-full overflow-hidden rounded-lg bg-black">
-          <BarcodeScanner
-            width={320}
-            height={240}
-            delay={300}
-            onError={(err: any) => {
-              setError(err?.message || "Camera error")
-            }}
-            onUpdate={(err: any, result: any) => {
-              if (err) {
-                setError("No code detected")
-              } else if (result) {
-                onDetected(result.getText())
-              }
-            }}
-          />
-        </div>
-
-        {error && (
-          <p className="mt-2 text-rose-500 text-xs text-center">{error}</p>
-        )}
-
-        <p className="mt-2 text-gray-400 text-xs text-center">
-          Point your camera at a barcode or QR code.<br />
-          Tap outside or “X” to close.
-        </p>
-      </div>
-    </div>
-  )
 }
 
 // ─── Main Admin Page ────────────────────────────────────────────────────────────
@@ -244,7 +188,7 @@ export default function ProductAdminPage() {
       <div className="max-w-5xl mx-auto space-y-12">
         <h1 className="text-3xl font-bold text-white">Product Administration</h1>
 
-        {/* === Category Management */}
+        {/* === Category Management === */}
         <section className="bg-gray-800 shadow-lg rounded-2xl p-8">
           <h2 className="text-2xl font-semibold text-white mb-4">Categories</h2>
           <div className="flex gap-4 mb-6">
@@ -288,7 +232,7 @@ export default function ProductAdminPage() {
           </ul>
         </section>
 
-        {/* === Add New Product */}
+        {/* === Add New Product === */}
         <section className="bg-gray-800 shadow-lg rounded-2xl p-8">
           <h2 className="text-2xl font-semibold text-white mb-4">Add New Product</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
