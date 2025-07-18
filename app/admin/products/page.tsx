@@ -1,10 +1,9 @@
-// app/admin/products/page.tsx
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { BrowserMultiFormatReader, Result } from "@zxing/browser"
 import { Combobox } from "@headlessui/react"
 import { motion } from "framer-motion"
-import { BrowserMultiFormatReader, Result } from "@zxing/browser"
 import { toast } from "sonner"
 import { EditProductModal } from "@/components/EditProductModal"
 import { MotionButton } from "@/components/button"
