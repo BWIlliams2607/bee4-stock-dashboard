@@ -1,7 +1,7 @@
 "use client"
 
 import { Fragment, useState, useEffect } from "react"
-import { Dialog, Transition } from "@headlessui/react"
+import { Dialog, DialogBackdrop, Transition } from "@headlessui/react"
 import { X } from "lucide-react"
 
 interface Product {
@@ -36,13 +36,10 @@ export function EditProductModal({
   if (!form) return null
 
   async function handleSave() {
-    // Guard against null once more for TS
+    // Guard against null again for TypeScript
     if (!form) return
 
-    // Bubble up the fully‑populated Product
     onSave(form)
-
-    // Close the modal
     onClose()
   }
 
@@ -54,6 +51,7 @@ export function EditProductModal({
         onClose={onClose}
       >
         <div className="flex min-h-screen items-center justify-center px-4">
+          {/* BACKDROP */}
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-200"
@@ -63,9 +61,10 @@ export function EditProductModal({
             leaveFrom="opacity-40"
             leaveTo="opacity-0"
           >
-            <Dialog.Overlay className="fixed inset-0 bg-black" />
+            <DialogBackdrop className="fixed inset-0 bg-black" />
           </Transition.Child>
 
+          {/* MODAL PANEL */}
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-200"
@@ -76,16 +75,20 @@ export function EditProductModal({
             leaveTo="opacity-0 scale-95"
           >
             <div className="relative w-full max-w-md transform overflow-hidden rounded-2xl bg-muted/80 p-6 text-left align-middle shadow-xl transition-all">
+              {/* CLOSE BUTTON */}
               <button
                 onClick={onClose}
                 className="absolute top-3 right-3 text-foreground hover:text-rose-400"
               >
                 <X size={20} />
               </button>
+
+              {/* TITLE */}
               <Dialog.Title className="text-lg font-medium">
                 Edit Product
               </Dialog.Title>
 
+              {/* FORM FIELDS */}
               <div className="mt-4 space-y-4">
                 <label className="block text-sm">
                   Barcode
@@ -124,6 +127,7 @@ export function EditProductModal({
                 </label>
               </div>
 
+              {/* ACTIONS */}
               <div className="mt-6 flex justify-end space-x-2">
                 <button
                   onClick={onClose}
