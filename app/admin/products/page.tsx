@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, Fragment } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Combobox } from "@headlessui/react"
 import { motion } from "framer-motion"
 import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner"
