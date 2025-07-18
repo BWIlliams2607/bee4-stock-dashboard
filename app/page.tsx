@@ -26,43 +26,41 @@ export default function DashboardPage() {
   const [incoming, setIncoming] = useState<IncomingItem[]>([])
   const [dispatched, setDispatched] = useState<Dispatch[]>([])
 
-  // Fetch all data on mount
+  // 1) Stock on hand
+  // 2) Incoming shipments
+  // 3) Today's dispatches
   useEffect(() => {
-    // 1) Stock on hand
     fetch("/api/stock-summary")
       .then((r) => r.json())
       .then((data) => setStockOnHand(data.totalOnHand))
       .catch(() => setStockOnHand(0))
 
-    // 2) Incoming shipments
     fetch("/api/incoming-stock")
       .then((r) => r.json())
       .then(setIncoming)
       .catch(() => setIncoming([]))
 
-    // 3) Dispatches today
     fetch("/api/goods-out/today")
       .then((r) => r.json())
       .then(setDispatched)
       .catch(() => setDispatched([]))
   }, [])
 
-  // Prepare the three top‐level summary cards
   const cards = [
     {
       title: "Stock On Hand",
       value: stockOnHand !== null ? stockOnHand : "…",
-      icon: <Package size={28} className="text-blue-500" />,
+      icon: <Package size={28} className="text-blue-400" />,
     },
     {
       title: "Incoming Shipments",
       value: incoming.length,
-      icon: <Truck size={28} className="text-yellow-500" />,
+      icon: <Truck size={28} className="text-yellow-400" />,
     },
     {
       title: "Dispatched Today",
       value: dispatched.length,
-      icon: <ClipboardList size={28} className="text-rose-500" />,
+      icon: <ClipboardList size={28} className="text-rose-400" />,
     },
   ]
 
@@ -73,45 +71,27 @@ export default function DashboardPage() {
       transition={{ duration: 0.4 }}
       className="space-y-10 py-8 px-4 md:px-8"
     >
-      {/* Page title */}
-      <h2 className="text-3xl font-bold tracking-tight text-blue-400">
-        Bee4 Stock Dashboard
-      </h2>
+      {/* Page Title */}
+      <h1 className="text-3xl font-bold text-blue-400">Bee4 Stock Dashboard</h1>
 
-      {/* Quick‑action buttons */}
+      {/* Quick Actions */}
       <QuickActions />
 
-      {/* Top summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+      {/* Top‑Level Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.15 }}
-            className="bg-muted/70 shadow-xl rounded-2xl p-8 flex flex-col items-center justify-center"
+            transition={{ delay: i * 0.1 }}
+            className="bg-gray-800/60 rounded-2xl p-6 flex flex-col items-center shadow-lg"
           >
             {card.icon}
-            <div className="mt-2 text-4xl font-bold">{card.value}</div>
-            <div className="mt-2 text-md text-muted-foreground">{card.title}</div>
+            <div className="mt-2 text-4xl font-semibold text-white">{card.value}</div>
+            <div className="mt-1 text-sm text-gray-300">{card.title}</div>
           </motion.div>
         ))}
-      </div>
-
-      {/* Detailed summaries in accordions */}
-      <div className="space-y-6">
-        <IncomingSummary
-          details={incoming.map((i) => ({
-            timestamp: i.timestamp,
-            qty: i.qty,
-          }))}
-        />
-
-        <DispatchedSummary
-          details={dispatched.map((d) => ({
-            timestamp: d.timestamp,
-          }))}
-        />
       </div>
     </motion.div>
   )
