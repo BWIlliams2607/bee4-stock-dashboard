@@ -1,3 +1,4 @@
+// app/order-requests/page.tsx
 "use client"
 
 import { useState, useEffect } from "react"
@@ -5,6 +6,7 @@ import { motion } from "framer-motion"
 import { Check, Clock, FileText } from "lucide-react"
 import { toast } from "sonner"
 import { MotionButton } from "@/components/button"
+import { Card } from "@/components/Card"
 
 type Request = {
   id: string
@@ -18,6 +20,7 @@ type Request = {
 }
 
 export default function OrderRequestsPage() {
+  // form state
   const [item, setItem] = useState("")
   const [category, setCategory] = useState("")
   const [quantity, setQuantity] = useState<number | "">("")
@@ -25,10 +28,11 @@ export default function OrderRequestsPage() {
   const [location, setLocation] = useState("")
   const [notes, setNotes] = useState("")
 
+  // logs
   const [requests, setRequests] = useState<Request[]>([])
   const [submitting, setSubmitting] = useState(false)
 
-  // fetch existing logs
+  // load existing
   useEffect(() => {
     fetch("/api/order-requests")
       .then((r) => r.json())
@@ -48,20 +52,20 @@ export default function OrderRequestsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     })
-    if (res.ok) {
+    if (!res.ok) {
+      const err = await res.json()
+      toast.error(`Email failed—request still logged: ${err.error}`)
+    } else {
       const saved = await res.json()
       setRequests((r) => [{ id: saved.id, ...body }, ...r])
       toast.success("Order request sent and logged!")
-      // reset form
+      // reset
       setItem("")
       setCategory("")
       setQuantity("")
       setPriority("")
       setLocation("")
       setNotes("")
-    } else {
-      const err = await res.json()
-      toast.error(`Email failed—request still logged: ${err.error}`)
     }
     setSubmitting(false)
   }
@@ -72,100 +76,127 @@ export default function OrderRequestsPage() {
       animate={{ opacity: 1 }}
       className="space-y-8 max-w-5xl mx-auto py-8"
     >
+      {/* header */}
       <header className="flex items-center space-x-2">
         <FileText className="w-6 h-6 text-emerald-400" />
-        <h1 className="text-2xl font-bold">Order Requests</h1>
+        <h1 className="text-2xl font-bold text-white">Order Requests</h1>
       </header>
 
-      <section className="bg-muted/70 p-6 rounded-2xl shadow-soft grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left column */}
-        <div className="space-y-4">
-          <label className="block text-sm font-medium">Item Description</label>
-          <input
-            type="text"
-            value={item}
-            onChange={(e) => setItem(e.target.value)}
-            placeholder="What do you need?"
-            className="w-full rounded-lg border border-border bg-input px-4 py-2 text-sm"
-            disabled={submitting}
-          />
+      {/* form */}
+      <Card>
+        <form className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-gray-200">
+              Item Description
+            </label>
+            <input
+              type="text"
+              value={item}
+              onChange={(e) => setItem(e.target.value)}
+              placeholder="What do you need?"
+              className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-400"
+              disabled={submitting}
+            />
 
-          <label className="block text-sm font-medium">Category</label>
-          <input
-            type="text"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            placeholder="e.g. Materials, Maintenance"
-            className="w-full rounded-lg border border-border bg-input px-4 py-2 text-sm"
-            disabled={submitting}
-          />
+            <label className="block text-sm font-medium text-gray-200">
+              Category
+            </label>
+            <input
+              type="text"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="e.g. Materials, Maintenance"
+              className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-400"
+              disabled={submitting}
+            />
 
-          <label className="block text-sm font-medium">Quantity</label>
-          <input
-            type="number"
-            value={quantity}
-            onChange={(e) => setQuantity(e.target.value === "" ? "" : Number(e.target.value))}
-            placeholder="e.g. 10"
-            className="w-full rounded-lg border border-border bg-input px-4 py-2 text-sm"
-            disabled={submitting}
-          />
-        </div>
+            <label className="block text-sm font-medium text-gray-200">
+              Quantity
+            </label>
+            <input
+              type="number"
+              value={quantity}
+              onChange={(e) =>
+                setQuantity(e.target.value === "" ? "" : Number(e.target.value))
+              }
+              placeholder="e.g. 10"
+              className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-400"
+              disabled={submitting}
+            />
+          </div>
 
-        {/* Right column */}
-        <div className="space-y-4">
-          <label className="block text-sm font-medium">Priority</label>
-          <input
-            type="text"
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
-            placeholder="e.g. Low, Medium, High"
-            className="w-full rounded-lg border border-border bg-input px-4 py-2 text-sm"
-            disabled={submitting}
-          />
+          <div className="space-y-4">
+            <label className="block text-sm font-medium text-gray-200">
+              Priority
+            </label>
+            <input
+              type="text"
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              placeholder="e.g. Low, Medium, High"
+              className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-400"
+              disabled={submitting}
+            />
 
-          <label className="block text-sm font-medium">Location</label>
-          <input
-            type="text"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="Where should it go?"
-            className="w-full rounded-lg border border-border bg-input px-4 py-2 text-sm"
-            disabled={submitting}
-          />
+            <label className="block text-sm font-medium text-gray-200">
+              Location
+            </label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Where should it go?"
+              className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-400"
+              disabled={submitting}
+            />
 
-          <label className="block text-sm font-medium">Additional Notes</label>
-          <textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="Any extra details…"
-            className="w-full rounded-lg border border-border bg-input px-4 py-2 text-sm h-24 resize-none"
-            disabled={submitting}
-          />
-        </div>
+            <label className="block text-sm font-medium text-gray-200">
+              Additional Notes
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Any extra details…"
+              className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-sm text-white placeholder-gray-400 h-24 resize-none focus:ring-2 focus:ring-emerald-400"
+              disabled={submitting}
+            />
+          </div>
 
-        {/* Submit button spans full width */}
-        <div className="lg:col-span-2 flex justify-end">
-          <MotionButton
-            onClick={handleSubmit}
-            disabled={submitting}
-            whileHover={{ scale: submitting ? 1 : 1.02 }}
-            whileTap={{ scale: submitting ? 1 : 0.98 }}
-            className="bg-blue-600 disabled:opacity-50 text-white hover:bg-blue-700 flex items-center gap-2 px-6 py-3 rounded-lg"
-          >
-            {submitting ? <Clock className="animate-spin w-5 h-5" /> : <Check className="w-5 h-5" />}
-            <span>{submitting ? "Submitting…" : "Submit Request"}</span>
-          </MotionButton>
-        </div>
-      </section>
+          <div className="lg:col-span-2 flex justify-end">
+            <MotionButton
+              onClick={handleSubmit}
+              disabled={submitting}
+              whileHover={{ scale: submitting ? 1 : 1.02 }}
+              whileTap={{ scale: submitting ? 1 : 0.98 }}
+              className="bg-blue-600 disabled:opacity-50 text-white hover:bg-blue-700 flex items-center gap-2 px-6 py-3 rounded-lg"
+            >
+              {submitting ? (
+                <Clock className="animate-spin w-5 h-5" />
+              ) : (
+                <Check className="w-5 h-5" />
+              )}
+              <span>{submitting ? "Submitting…" : "Submit Request"}</span>
+            </MotionButton>
+          </div>
+        </form>
+      </Card>
 
-      {/* Request Log */}
-      <section>
-        <h2 className="text-lg font-semibold mb-4">Request Log</h2>
-        <div className="overflow-x-auto bg-muted/70 p-4 rounded-2xl shadow-soft">
-          <table className="min-w-full text-sm">
+      {/* log */}
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold text-white">Request Log</h2>
+        <div className="overflow-x-auto bg-gray-800 p-4 rounded-2xl shadow-lg">
+          <table className="min-w-full text-white text-sm">
             <thead>
-              <tr className="border-b border-border">
-                {["Time", "Item", "Category", "Qty", "Priority", "Location", "Notes"].map((h) => (
+              <tr className="border-b border-gray-600">
+                {[
+                  "Time",
+                  "Item",
+                  "Category",
+                  "Qty",
+                  "Priority",
+                  "Location",
+                  "Notes",
+                ].map((h) => (
                   <th key={h} className="p-2 text-left">
                     {h}
                   </th>
@@ -174,7 +205,10 @@ export default function OrderRequestsPage() {
             </thead>
             <tbody>
               {requests.map((r) => (
-                <tr key={r.id} className="border-b hover:bg-muted/50 transition">
+                <tr
+                  key={r.id}
+                  className="border-b border-gray-700 hover:bg-gray-700 transition"
+                >
                   <td className="p-2">
                     {new Date(r.timestamp).toLocaleString(undefined, {
                       day: "2-digit",
@@ -195,7 +229,10 @@ export default function OrderRequestsPage() {
               ))}
               {requests.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="p-4 text-center text-muted-foreground">
+                  <td
+                    colSpan={7}
+                    className="p-4 text-center text-gray-400"
+                  >
                     No requests yet
                   </td>
                 </tr>
