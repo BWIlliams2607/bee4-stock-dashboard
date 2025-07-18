@@ -26,9 +26,7 @@ export default function DashboardPage() {
   const [incoming, setIncoming] = useState<IncomingItem[]>([])
   const [dispatched, setDispatched] = useState<Dispatch[]>([])
 
-  // 1) Stock on hand
-  // 2) Incoming shipments
-  // 3) Today's dispatches
+  // fetch all three datasets on mount
   useEffect(() => {
     fetch("/api/stock-summary")
       .then((r) => r.json())
@@ -72,12 +70,14 @@ export default function DashboardPage() {
       className="space-y-10 py-8 px-4 md:px-8"
     >
       {/* Page Title */}
-      <h1 className="text-3xl font-bold text-blue-400">Bee4 Stock Dashboard</h1>
+      <h1 className="text-3xl font-bold text-blue-400">
+        Bee4 Stock Dashboard
+      </h1>
 
-      {/* Quick Actions */}
+      {/* Quick‑action bar */}
       <QuickActions />
 
-      {/* Top‑Level Summary Cards */}
+      {/* Top summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card, i) => (
           <motion.div
@@ -88,13 +88,15 @@ export default function DashboardPage() {
             className="bg-gray-800/60 rounded-2xl p-6 flex flex-col items-center shadow-lg"
           >
             {card.icon}
-            <div className="mt-2 text-4xl font-semibold text-white">{card.value}</div>
+            <div className="mt-2 text-4xl font-semibold text-white">
+              {card.value}
+            </div>
             <div className="mt-1 text-sm text-gray-300">{card.title}</div>
           </motion.div>
         ))}
       </div>
 
-      {/* Detailed Summaries */}
+      {/* Detailed summaries */}
       <div className="space-y-6">
         <motion.div
           initial={{ opacity: 0 }}
@@ -102,7 +104,14 @@ export default function DashboardPage() {
           transition={{ delay: 0.3 }}
           className="bg-gray-800/60 rounded-2xl shadow-lg overflow-hidden"
         >
-          <IncomingSummary items={incoming} />
+          {/* Pass as `details` prop */}
+          <IncomingSummary
+            details={incoming.map((i) => ({
+              timestamp: i.timestamp,
+              product: i.product,
+              qty: i.qty,
+            }))}
+          />
         </motion.div>
 
         <motion.div
@@ -111,7 +120,11 @@ export default function DashboardPage() {
           transition={{ delay: 0.4 }}
           className="bg-gray-800/60 rounded-2xl shadow-lg overflow-hidden"
         >
-          <DispatchedSummary items={dispatched} />
+          <DispatchedSummary
+            details={dispatched.map((d) => ({
+              timestamp: d.timestamp,
+            }))}
+          />
         </motion.div>
       </div>
     </motion.div>
