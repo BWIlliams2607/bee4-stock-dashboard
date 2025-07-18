@@ -1,5 +1,4 @@
 "use client"
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState } from "react"
 import { BrowserMultiFormatReader } from "@zxing/browser"
@@ -27,7 +26,7 @@ export function CameraBarcodeScanner({ onDetected, onClose }: ScannerProps) {
         setError("Scanning...")
       })
 
-    // decodeOnceFromVideoDevice stops itself; no manual cleanup needed
+    // decodeOnceFromVideoDevice stops itself; no cleanup needed
   }, [onDetected])
 
   return (
