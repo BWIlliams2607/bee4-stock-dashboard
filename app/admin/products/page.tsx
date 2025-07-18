@@ -1,3 +1,4 @@
+// app/admin/products/page.tsx
 "use client"
 
 import { useState, useEffect, useRef } from "react"
@@ -13,6 +14,7 @@ import {
 import { MotionButton } from "@/components/button"
 import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner"
 import { toast } from "sonner"
+import { EditProductModal } from "@/components/EditProductModal"
 
 type Category = { id: number; name: string }
 type Product = {
@@ -44,6 +46,10 @@ export default function ProductAdminPage() {
   // barcode scanner
   const [scannerOpen, setScannerOpen] = useState(false)
   const barcodeRef = useRef<HTMLInputElement>(null)
+
+  // edit modal
+  const [editing, setEditing] = useState<Product | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
 
   // fetch on mount
   useEffect(() => {
@@ -114,10 +120,42 @@ export default function ProductAdminPage() {
     barcodeRef.current?.focus()
   }
 
-  // remove product (client-side soft delete)
-  const handleRemove = (idToRemove: number) => {
-    setProducts((prev) => prev.filter((p) => p.id !== idToRemove))
-    toast.success("Product removed locally. (Server delete pending.)")
+  // delete on server + client
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete this product?")) return
+    const res = await fetch(`/api/products/${id}`, { method: "DELETE" })
+    if (res.ok) {
+      setProducts((p) => p.filter((x) => x.id !== id))
+      toast.success("Deleted")
+    } else {
+      toast.error("Delete failed")
+    }
+  }
+
+  // open edit modal
+  const openEdit = (p: Product) => {
+    setEditing(p)
+    setEditOpen(true)
+  }
+
+  // save edits
+  const handleSave = async (upd: Product) => {
+    const res = await fetch(`/api/products/${upd.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        barcode: upd.barcode,
+        name: upd.name,
+        description: upd.description,
+        categoryIds: upd.categories.map((c) => c.id),
+      }),
+    })
+    if (!res.ok) return toast.error("Update failed")
+    const saved: Product = await res.json()
+    setProducts((list) =>
+      list.map((x) => (x.id === saved.id ? saved : x))
+    )
+    toast.success("Updated")
   }
 
   return (
@@ -128,7 +166,7 @@ export default function ProductAdminPage() {
     >
       <h1 className="text-2xl font-bold">Product Administration</h1>
 
-      {/* Category Management */}
+      {/* === Category Management === */}
       <section className="bg-muted/70 p-6 rounded-2xl shadow-soft">
         <h2 className="text-lg font-semibold mb-4">Categories</h2>
         <div className="flex gap-2 mb-4">
@@ -174,7 +212,7 @@ export default function ProductAdminPage() {
         </ul>
       </section>
 
-      {/* Product Creation */}
+      {/* === Add New Product === */}
       <section className="bg-muted/70 p-6 rounded-2xl shadow-soft">
         <h2 className="text-lg font-semibold mb-4">Add New Product</h2>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -215,7 +253,9 @@ export default function ProductAdminPage() {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
+            <label className="block text-sm font-medium mb-1">
+              Description
+            </label>
             <input
               type="text"
               value={newProdDesc}
@@ -225,9 +265,11 @@ export default function ProductAdminPage() {
             />
           </div>
 
-          {/* Categories Multi-select */}
+          {/* Categories */}
           <div>
-            <label className="block text-sm font-medium mb-1">Categories</label>
+            <label className="block text-sm font-medium mb-1">
+              Categories
+            </label>
             <Combobox
               value={newProdCats}
               onChange={setNewProdCats}
@@ -276,15 +318,15 @@ export default function ProductAdminPage() {
         </div>
       </section>
 
-      {/* Product List & Actions */}
+      {/* === Product List === */}
       <section>
-        <div className="mb-4 flex gap-2">
+        <div className="mb-4">
           <input
             type="text"
             value={prodSearch}
             onChange={(e) => setProdSearch(e.target.value)}
             placeholder="Search products…"
-            className="flex-1 rounded-lg border border-border px-3 py-2 bg-input text-sm"
+            className="w-full rounded-lg border border-border px-3 py-2 bg-input text-sm"
           />
         </div>
 
@@ -292,17 +334,13 @@ export default function ProductAdminPage() {
           <table className="min-w-full text-sm">
             <thead>
               <tr className="border-b border-border">
-                {[
-                  "Barcode",
-                  "Name",
-                  "Description",
-                  "Categories",
-                  "Actions",
-                ].map((h) => (
-                  <th key={h} className="p-2 text-left">
-                    {h}
-                  </th>
-                ))}
+                {["Barcode", "Name", "Description", "Categories", "Actions"].map(
+                  (h) => (
+                    <th key={h} className="p-2 text-left">
+                      {h}
+                    </th>
+                  )
+                )}
               </tr>
             </thead>
             <tbody>
@@ -318,39 +356,15 @@ export default function ProductAdminPage() {
                     {p.categories.map((c) => c.name).join(", ") || "—"}
                   </td>
                   <td className="p-2 flex gap-2">
-                    {/* Delete */}
                     <button
-                      onClick={() => {
-                        if (!confirm("Delete this product?")) return
-                        handleRemove(p.id)
-                      }}
+                      onClick={() => handleDelete(p.id)}
                       className="text-rose-500 hover:text-rose-700"
                       title="Delete"
                     >
                       <Trash2 size={16} />
                     </button>
-
-                    {/* Edit */}
                     <button
-                      onClick={async () => {
-                        const newName = prompt("New name", p.name)
-                        if (newName == null || newName === p.name) return
-                        const res = await fetch(`/api/products/${p.id}`, {
-                          method: "PATCH",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            name: newName,
-                            description: p.description,
-                            categoryIds: p.categories.map((c) => c.id),
-                          }),
-                        })
-                        if (!res.ok) return toast.error("Update failed")
-                        const updated = await res.json()
-                        setProducts((list) =>
-                          list.map((x) => (x.id === updated.id ? updated : x))
-                        )
-                        toast.success("Updated")
-                      }}
+                      onClick={() => openEdit(p)}
                       className="text-blue-500 hover:text-blue-700"
                       title="Edit"
                     >
@@ -374,7 +388,7 @@ export default function ProductAdminPage() {
         </div>
       </section>
 
-      {/* Barcode Scanner Modal */}
+      {/* Barcode Scanner */}
       {scannerOpen && (
         <CameraBarcodeScanner
           onDetected={(code) => {
@@ -385,6 +399,14 @@ export default function ProductAdminPage() {
           onClose={() => setScannerOpen(false)}
         />
       )}
+
+      {/* Edit Modal */}
+      <EditProductModal
+        isOpen={editOpen}
+        onClose={() => setEditOpen(false)}
+        product={editing}
+        onSave={handleSave}
+      />
     </motion.div>
-  )
+)
 }
