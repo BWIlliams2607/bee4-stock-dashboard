@@ -93,6 +93,27 @@ export default function DashboardPage() {
           </motion.div>
         ))}
       </div>
+
+      {/* Detailed Summaries */}
+      <div className="space-y-6">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="bg-gray-800/60 rounded-2xl shadow-lg overflow-hidden"
+        >
+          <IncomingSummary items={incoming} />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="bg-gray-800/60 rounded-2xl shadow-lg overflow-hidden"
+        >
+          <DispatchedSummary items={dispatched} />
+        </motion.div>
+      </div>
     </motion.div>
   )
 }
