@@ -13,7 +13,7 @@ import type {
   Shelf,
   ProductWithRelations,
   EditPayload,
-} from "@/lib/types";              // your shared types file
+} from "@/lib/types";
 import { EditProductModal } from "@/components/EditProductModal";
 import { MotionButton } from "@/components/button";
 import {
@@ -242,7 +242,7 @@ export default function ProductAdminPage() {
           Product Administration
         </h1>
 
-        {/* === Categories === */}
+        {/* === Categories Section === */}
         <section className="bg-gray-800 shadow-lg rounded-2xl p-8">
           <h2 className="text-2xl font-semibold text-white mb-4">
             Categories
@@ -288,12 +288,11 @@ export default function ProductAdminPage() {
           </ul>
         </section>
 
-        {/* === Add New Product === */}
+        {/* === Add New Product Section === */}
         <section className="bg-gray-800 shadow-lg rounded-2xl p-8">
           <h2 className="text-2xl font-semibold text-white mb-4">
             Add New Product
           </h2>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Barcode */}
             <div>
@@ -319,7 +318,6 @@ export default function ProductAdminPage() {
                 </button>
               </div>
             </div>
-
             {/* Name */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -333,7 +331,6 @@ export default function ProductAdminPage() {
                 className="w-full h-12 rounded-lg border border-gray-700 px-4 bg-gray-700 text-sm placeholder-gray-400 text-white focus:ring-2 focus:ring-green-500"
               />
             </div>
-
             {/* Description */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -348,7 +345,6 @@ export default function ProductAdminPage() {
               />
             </div>
           </div>
-
           {/* Categories */}
           <div className="md:col-span-3 mt-6">
             <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -384,9 +380,9 @@ export default function ProductAdminPage() {
               </div>
             </Combobox>
           </div>
-
           {/* Supplier / Location / Shelf */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+            {/* Supplier */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">
                 Default Supplier
@@ -408,6 +404,7 @@ export default function ProductAdminPage() {
                 ))}
               </select>
             </div>
+            {/* Location */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">
                 Default Location
@@ -429,6 +426,7 @@ export default function ProductAdminPage() {
                 ))}
               </select>
             </div>
+            {/* Shelf */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">
                 Default Shelf
@@ -451,8 +449,7 @@ export default function ProductAdminPage() {
               </select>
             </div>
           </div>
-
-          {/* Create button */}
+          {/* Create Product Button */}
           <div className="flex justify-end mt-6">
             <MotionButton
               onClick={handleAddProduct}
@@ -465,7 +462,7 @@ export default function ProductAdminPage() {
           </div>
         </section>
 
-        {/* === Product List === */}
+        {/* === Product List Section === */}
         <section className="space-y-4">
           <input
             type="text"
@@ -540,7 +537,7 @@ export default function ProductAdminPage() {
           </div>
         </section>
 
-        {/* Scanner Modal */}
+        {/* === Scanner Modal === */}
         {scannerOpen && (
           <CameraBarcodeScanner
             onDetected={(code) => {
@@ -552,21 +549,23 @@ export default function ProductAdminPage() {
           />
         )}
 
-        {/* Edit Modal */}
+        {/* === Edit Modal === */}
         {editing && (
           <EditProductModal
             isOpen={editOpen}
             onClose={() => setEditOpen(false)}
-            product={{
-              id: editing.id,
-              barcode: editing.barcode,
-              name: editing.name,
-              description: editing.description ?? undefined,
-              categoryIds: editing.categories.map((c) => c.id),
-              supplierId: editing.defaultSupplier?.id,
-              locationId: editing.defaultLocation?.id,
-              shelfId: editing.defaultShelf?.id,
-            }}
+            product={
+              {
+                id: editing.id,
+                barcode: editing.barcode,
+                name: editing.name,
+                description: editing.description ?? undefined,
+                categoryIds: editing.categories.map((c) => c.id),
+                supplierId: editing.defaultSupplier?.id,
+                locationId: editing.defaultLocation?.id,
+                shelfId: editing.defaultShelf?.id,
+              } as EditPayload
+            }
             onSave={saveProduct}
           />
         )}
