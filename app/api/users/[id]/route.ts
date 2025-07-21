@@ -1,14 +1,18 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";    // <-- named import
+// app/api/users/[id]/route.ts
+import { NextResponse, NextRequest } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: { id: string } }
 ) {
-  const { allowedPages } = (await request.json()) as { allowedPages: string[] };
+  const { id } = context.params;
+  const { allowedPages } = (await request.json()) as {
+    allowedPages: string[];
+  };
 
   const updated = await prisma.user.update({
-    where: { id: params.id },
+    where: { id },
     data: { allowedPages },
   });
 
