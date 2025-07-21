@@ -18,36 +18,26 @@ const sections = [
 
 export default function AdminPage() {
   return (
-    <div className="min-h-screen bg-gray-900 py-12 px-4">
-      <h1 className="text-3xl font-bold text-white mb-6">
+    <div className="min-h-screen bg-gray-900 py-12 px-8">
+      <h1 className="text-4xl font-bold text-white mb-8">
         Product Administration
       </h1>
 
       <Tab.Group>
-        <Tab.List className="flex space-x-2 mb-4">
+        {/* 1. Pill‑style tabs */}
+        <Tab.List className="flex space-x-2 mb-6 bg-gray-800 rounded-xl p-1">
           {sections.map((s) => (
-            <Tab
-              key={s.name}
-              className={({ selected }) =>
-                `px-4 py-2 rounded-lg transition ${
-                  selected
-                    ? "bg-green-500 text-white"
-                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                }`
-              }
-            >
-              {s.name}
-            </Tab>
+            <Tab /* … */>{s.name}</Tab>
           ))}
         </Tab.List>
 
-        <Tab.Panels>
+        {/* 2. Card panels */}
+        <Tab.Panels className="space-y-6">
           {sections.map(({ name, Component }) => (
-            <Tab.Panel
-              key={name}
-              className="bg-gray-800 p-6 rounded-2xl shadow-lg"
-            >
-              <Component />
+            <Tab.Panel key={name}>
+              <div className="bg-gray-800 rounded-2xl shadow-lg p-8">
+                <Component />
+              </div>
             </Tab.Panel>
           ))}
         </Tab.Panels>
@@ -55,3 +45,4 @@ export default function AdminPage() {
     </div>
   );
 }
+
