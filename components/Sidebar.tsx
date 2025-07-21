@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Menu,
   X,
@@ -13,6 +13,11 @@ import {
   Truck,
   Settings,
   ClipboardList,
+  Sun,
+  Moon,
+  Search as SearchIcon,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
 
 const navSections = [
@@ -48,113 +53,177 @@ const navSections = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  const [open, setOpen] = useState(false)
+  const [openMobile, setOpenMobile] = useState(false)
+  const [collapsed, setCollapsed] = useState(false)
+  const [search, setSearch] = useState("")
+  const [darkMode, setDarkMode] = useState(false)
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({})
+
+  // initialize expandedSections
+  useEffect(() => {
+    const init: Record<string, boolean> = {}
+    navSections.forEach((sec) => (init[sec.label] = true))
+    setExpandedSections(init)
+  }, [])
+
+  // toggle theme
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode)
+  }, [darkMode])
+
+  // filter links
+  const filteredSections = navSections
+    .map((section) => ({
+      ...section,
+      links: section.links.filter((link) =>
+        link.name.toLowerCase().includes(search.toLowerCase())
+      ),
+    }))
+    .filter((section) => section.links.length > 0)
+
+  const renderNav = (mobile = false) => (
+    <nav className="flex-1 flex flex-col gap-2 overflow-auto">
+      <div className="px-4 py-2">
+        <div className="relative">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search..."
+            className="w-full rounded-lg border bg-input px-4 py-2 pr-10 text-sm focus:ring-2"
+          />
+          <SearchIcon size={16} className="absolute top-2.5 right-3 text-muted-foreground" />
+        </div>
+      </div>
+      {filteredSections.map((section, idx) => (
+        <div key={section.label} className="px-2">
+          <button
+            onClick={() =>
+              setExpandedSections((prev) => ({
+                ...prev,
+                [section.label]: !prev[section.label],
+              }))
+            }
+            className="w-full flex items-center justify-between uppercase text-xs text-muted-foreground font-semibold px-4 py-2"
+          >
+            {section.label}
+            {expandedSections[section.label] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+
+          <AnimatePresence initial={false}>
+            {expandedSections[section.label] && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="flex flex-col"
+              >
+                {section.links.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`flex items-center gap-3 px-6 py-2 rounded-lg transition-colors 
+                      ${pathname === link.href
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-700 text-white shadow'
+                        : 'text-muted-foreground hover:bg-muted/40'}`}
+                    onClick={() => mobile && setOpenMobile(false)}
+                  >
+                    {link.icon}
+                    {!collapsed && <span className="font-medium">{link.name}</span>}
+                    {pathname === link.href && (
+                      <motion.div
+                        layoutId="active-link"
+                        className="ml-auto w-2 h-2 rounded-full bg-blue-500"
+                      />
+                    )}
+                  </Link>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {idx < filteredSections.length - 1 && <div className="border-t border-border my-2 mx-4" />}
+        </div>
+      ))}
+    </nav>
+  )
 
   return (
     <>
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 z-30 bg-gradient-to-b from-background/90 to-background/70 border-r border-border shadow-xl backdrop-blur-lg">
-        <div className="h-16 flex items-center px-6 font-bold text-xl tracking-tight select-none">
-          Bee4 Stock
+      {/* Desktop */}
+      <aside
+        className={`hidden md:flex flex-col h-screen fixed left-0 top-0 z-30 bg-background shadow-xl backdrop-blur-lg transition-width duration-300
+          ${collapsed ? 'w-20' : 'w-64'}`}
+      >
+        <div className="h-16 flex items-center justify-between px-4">
+          {!collapsed && <span className="font-bold text-xl">Bee4 Stock</span>}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-2 text-muted-foreground hover:text-white"
+            aria-label="Toggle collapse"
+          >
+            {collapsed ? <Menu size={20} /> : <X size={20} />}
+          </button>
         </div>
-        <nav className="flex-1 flex flex-col gap-4 mt-6">
-          {navSections.map((section, idx) => (
-            <div key={section.label}>
-              {idx !== 0 && <div className="border-t border-border my-3" />}
-              <div className="uppercase text-xs text-muted-foreground font-semibold px-6 py-1 tracking-wider">
-                {section.label}
-              </div>
-              {section.links.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`flex items-center gap-3 px-6 py-2 my-1 rounded-lg group transition
-                    ${pathname === link.href
-                      ? "bg-gradient-to-r from-blue-600/70 to-purple-700/80 text-white shadow"
-                      : "text-muted-foreground hover:bg-muted/40"}`}
-                >
-                  {link.icon}
-                  <span className="font-medium">{link.name}</span>
-                  {pathname === link.href && (
-                    <motion.div
-                      layoutId="active-link"
-                      className="ml-auto w-2 h-2 rounded-full bg-blue-500"
-                    />
-                  )}
-                </Link>
-              ))}
-            </div>
-          ))}
-        </nav>
+
+        {renderNav(false)}
+
+        <div className="mt-auto px-4 py-4 border-t border-border flex items-center gap-2">
+          <button onClick={() => setDarkMode(!darkMode)} aria-label="Toggle theme">
+            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          {!collapsed && <span className="text-sm">{darkMode ? 'Light Mode' : 'Dark Mode'}</span>}
+        </div>
       </aside>
 
-      {/* Mobile Sidebar */}
+      {/* Mobile */}
       <div className="md:hidden flex items-center h-16 px-4 bg-background border-b border-border z-20">
-        <div className="font-bold text-lg tracking-tight flex-1">Bee4 Stock</div>
         <button
           className="p-2 text-muted-foreground"
-          onClick={() => setOpen(true)}
+          onClick={() => setOpenMobile(true)}
           aria-label="Open Menu"
         >
           <Menu size={24} />
         </button>
+        <span className="ml-4 font-bold text-lg">Bee4 Stock</span>
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className="ml-auto p-2 text-muted-foreground"
+          aria-label="Toggle theme"
+        >
+          {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
       </div>
+
       <AnimatePresence>
-        {open && (
+        {openMobile && (
           <motion.div
-            className="fixed inset-0 z-50"
+            className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setOpen(false)}
+            onClick={() => setOpenMobile(false)}
           >
             <motion.aside
               className="absolute left-0 top-0 h-full w-64 bg-background shadow-xl border-r border-border flex flex-col"
-              initial={{ x: "-100%" }}
+              initial={{ x: '-100%' }}
               animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="h-16 flex items-center px-6 font-bold text-lg">
-                Bee4 Stock
+              <div className="h-16 flex items-center justify-between px-4">
+                <span className="font-bold text-lg">Bee4 Stock</span>
                 <button
-                  className="ml-auto p-2 text-muted-foreground"
-                  onClick={() => setOpen(false)}
+                  onClick={() => setOpenMobile(false)}
+                  className="p-2 text-muted-foreground hover:text-white"
+                  aria-label="Close Menu"
                 >
                   <X size={22} />
                 </button>
               </div>
-              <nav className="flex-1 flex flex-col gap-4 mt-4">
-                {navSections.map((section, idx) => (
-                  <div key={section.label}>
-                    {idx !== 0 && <div className="border-t border-border my-3" />}
-                    <div className="uppercase text-xs text-muted-foreground font-semibold px-6 py-1 tracking-wider">
-                      {section.label}
-                    </div>
-                    {section.links.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className={`flex items-center gap-3 px-6 py-2 my-1 rounded-lg group transition
-                          ${pathname === link.href
-                            ? "bg-gradient-to-r from-blue-600/70 to-purple-700/80 text-white shadow"
-                            : "text-muted-foreground hover:bg-muted/40"}`}
-                        onClick={() => setOpen(false)}
-                      >
-                        {link.icon}
-                        <span className="font-medium">{link.name}</span>
-                        {pathname === link.href && (
-                          <motion.div
-                            layoutId="active-link"
-                            className="ml-auto w-2 h-2 rounded-full bg-blue-500"
-                          />
-                        )}
-                      </Link>
-                    ))}
-                  </div>
-                ))}
-              </nav>
+
+              {renderNav(true)}
             </motion.aside>
           </motion.div>
         )}
