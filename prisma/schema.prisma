@@ -152,10 +152,20 @@ enum PrinterState {
 }
 
 model Printer {
-  id        Int          @id @default(autoincrement())
+  id        Int            @id @default(autoincrement())
   name      String
   model     String
   location  String
-  status    PrinterState @default(online)
+  status    PrinterState   @default(online)
   lastSeen  DateTime
+  logs      PrinterLog[]
+}
+
+model PrinterLog {
+  id         Int           @id @default(autoincrement())
+  printer    Printer       @relation(fields: [printerId], references: [id])
+  printerId  Int
+  state      PrinterState
+  timestamp  DateTime      @default(now())
+  notes      String?
 }
