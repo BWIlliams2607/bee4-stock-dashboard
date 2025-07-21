@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect, useState } from "react";
 import PrinterStatusTable from "@/components/PrinterStatusTable";
 import type { PrinterStatus } from "@/types/printer";

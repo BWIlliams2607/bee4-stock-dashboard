@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect, useState } from "react";
 import MaintenanceOrderList from "@/components/MaintenanceOrderList";
 import MaintenanceOrderForm from "@/components/MaintenanceOrderForm";
