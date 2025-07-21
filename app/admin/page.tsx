@@ -10,10 +10,10 @@ import ProductSection from "@/components/admin/ProductSection";
 
 const sections = [
   { name: "Categories", Component: CategorySection },
-  { name: "Suppliers",  Component: SupplierSection },
-  { name: "Locations",  Component: LocationSection },
-  { name: "Shelves",    Component: ShelfSection },
-  { name: "Products",   Component: ProductSection },
+  { name: "Suppliers", Component: SupplierSection },
+  { name: "Locations", Component: LocationSection },
+  { name: "Shelves", Component: ShelfSection },
+  { name: "Products", Component: ProductSection },
 ];
 
 export default function AdminPage() {
@@ -24,20 +24,32 @@ export default function AdminPage() {
       </h1>
 
       <Tab.Group>
-        {/* 1. Pill‑style tabs */}
+        {/* Pill‑style tabs with keys */}
         <Tab.List className="flex space-x-2 mb-6 bg-gray-800 rounded-xl p-1">
           {sections.map((s) => (
-            <Tab /* … */>{s.name}</Tab>
+            <Tab
+              key={s.name}
+              className={({ selected }) =>
+                `px-4 py-2 rounded-lg font-medium transition ${
+                  selected
+                    ? "bg-green-500 text-white shadow"
+                    : "text-gray-300 hover:bg-gray-700"
+                }`
+              }
+            >
+              {s.name}
+            </Tab>
           ))}
         </Tab.List>
 
-        {/* 2. Card panels */}
+        {/* Card panels with keys */}
         <Tab.Panels className="space-y-6">
           {sections.map(({ name, Component }) => (
-            <Tab.Panel key={name}>
-              <div className="bg-gray-800 rounded-2xl shadow-lg p-8">
-                <Component />
-              </div>
+            <Tab.Panel
+              key={name}
+              className="bg-gray-800 rounded-2xl shadow-lg p-8"
+            >
+              <Component />
             </Tab.Panel>
           ))}
         </Tab.Panels>
@@ -45,4 +57,3 @@ export default function AdminPage() {
     </div>
   );
 }
-
