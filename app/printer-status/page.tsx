@@ -1,8 +1,9 @@
-"use client"
+// app/printer-status/page.tsx
+"use client";
 
 import { useEffect, useState } from "react";
 import PrinterStatusTable from "@/components/PrinterStatusTable";
-import type { PrinterStatus } from "@/types/printer";
+import type { PrinterStatus } from "@/types/printer"; // ensure your type matches the Prisma model
 
 export default function PrinterStatusPage() {
   const [printers, setPrinters] = useState<PrinterStatus[]>([]);
@@ -10,7 +11,8 @@ export default function PrinterStatusPage() {
   useEffect(() => {
     fetch("/api/printers/status")
       .then((r) => r.json())
-      .then(setPrinters);
+      .then(setPrinters)
+      .catch(console.error);
   }, []);
 
   return (

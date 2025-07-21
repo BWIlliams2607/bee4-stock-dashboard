@@ -124,3 +124,38 @@ model User {
   allowedPages String[] @default([])
   createdAt    DateTime @default(now())
 }
+
+model MaintenanceItem {
+  id             Int             @id @default(autoincrement())
+  name           String
+  category       String
+  supplier       String
+  inStock        Int
+  threshold      Int
+
+  // ← add this!
+  orderRequests  OrderRequest[]
+}
+
+model OrderRequest {
+  id           Int             @id @default(autoincrement())
+  itemId       Int
+  item         MaintenanceItem @relation(fields: [itemId], references: [id])
+  quantity     Int
+  requestedAt  DateTime        @default(now())
+}
+
+enum PrinterState {
+  online
+  offline
+  maintenance
+}
+
+model Printer {
+  id        Int          @id @default(autoincrement())
+  name      String
+  model     String
+  location  String
+  status    PrinterState @default(online)
+  lastSeen  DateTime
+}
