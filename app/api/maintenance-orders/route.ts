@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { MaintenanceItem, OrderRequest } from "@/types/maintenance";
 
 // mock catalog
-let mockCatalog: MaintenanceItem[] = [
+const mockCatalog: MaintenanceItem[] = [
   { id: 1, name: "Ink Cartridge", category: "Inks", supplier: "Supplier A", inStock: 5, threshold: 2 },
   { id: 2, name: "Cleaning Kit",  category: "Printers", supplier: "Supplier B", inStock: 1, threshold: 1 },
 ];
