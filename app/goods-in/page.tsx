@@ -75,6 +75,7 @@ export default function GoodsInPage() {
       const entry: GoodsInEntry = await res.json()
       setEntries((prev) => [entry, ...prev])
       toast.success("Goods in logged!")
+      // reset fields
       setBarcode("")
       setName("")
       setSku("")
@@ -124,9 +125,11 @@ export default function GoodsInPage() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8 pb-8">
+      {/* Entry Form */}
       <Card>
         <h2 className="text-2xl font-semibold mb-4">Goods In</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Barcode + Scanner */}
           <div className="md:col-span-3">
             <label className="block text-sm font-medium text-gray-200 mb-1">Barcode</label>
             <div className="flex">
@@ -147,6 +150,7 @@ export default function GoodsInPage() {
               </button>
             </div>
           </div>
+          {/* Other Fields */}
           {[
             { label: "Name", value: name, setter: setName },
             { label: "SKU", value: sku, setter: setSku },
@@ -195,6 +199,22 @@ export default function GoodsInPage() {
         </div>
       </Card>
 
+      {/* Summary Totals */}
+      <Card>
+        <h3 className="text-xl font-semibold mb-4">Summary</h3>
+        <div className="flex gap-8">
+          <div>
+            <div className="text-sm text-gray-400">Total Entries</div>
+            <div className="text-lg font-semibold">{totals.total}</div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-400">Total Quantity</div>
+            <div className="text-lg font-semibold">{totals.totalQty}</div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Recent Log */}
       <Card>
         <h3 className="text-xl font-semibold mb-4">Recent Goods In</h3>
         <div className="flex items-center justify-between mb-4">
@@ -213,33 +233,18 @@ export default function GoodsInPage() {
           <table className="min-w-full text-white text-sm">
             <thead>
               <tr className="border-b border-gray-600">
-                {[
-                  "Time",
-                  "Barcode",
-                  "Name",
-                  "SKU",
-                  "Qty",
-                  "Location",
-                  "Shelf",
-                  "Actions",
-                ].map((h) => (
-                  <th key={h} className="p-2 text-left">
-                    {h}
-                  </th>
-                ))}
+                {["Time", "Barcode", "Name", "SKU", "Qty", "Location", "Shelf", "Actions"].map(
+                  (h) => (
+                    <th key={h} className="p-2 text-left">{h}</th>
+                  )
+                )}
               </tr>
             </thead>
             <tbody>
               {filtered.map((e) => (
-                <tr
-                  key={e.id}
-                  className="border-b border-gray-700 hover:bg-gray-700 transition-colors"
-                >
+                <tr key={e.id} className="border-b border-gray-700 hover:bg-gray-700 transition-colors">
                   <td className="p-2">
-                    {new Date(e.timestamp).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {new Date(e.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </td>
                   <td className="p-2">{e.barcode}</td>
                   <td className="p-2">{e.name}</td>
@@ -248,10 +253,7 @@ export default function GoodsInPage() {
                   <td className="p-2">{e.location}</td>
                   <td className="p-2">{e.shelf}</td>
                   <td className="p-2 flex gap-2">
-                    <button
-                      onClick={() => handleDelete(e.id)}
-                      className="p-1 text-red-500 hover:text-red-600"
-                    >
+                    <button onClick={() => handleDelete(e.id)} className="p-1 text-red-500 hover:text-red-600">
                       <Trash2 size={16} />
                     </button>
                   </td>
