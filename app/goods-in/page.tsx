@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react"
 import { motion } from "framer-motion"
-import { Camera as CameraIcon, Trash2, Download } from "lucide-react"
+import { Camera as CameraIcon, Trash2, Download, Search as SearchIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { Card } from "@/components/Card"
@@ -29,10 +29,9 @@ export default function GoodsInPage() {
   const [location, setLocation] = useState("")
   const [shelf, setShelf] = useState("")
   const [scannerOpen, setScannerOpen] = useState(false)
-  const [search, setSearch] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
   const barcodeRef = useRef<HTMLInputElement>(null)
 
-  // fetch initial entries
   useEffect(() => {
     fetchEntries()
   }, [])
@@ -46,19 +45,17 @@ export default function GoodsInPage() {
     }
   }
 
-  // filtered and sorted entries
   const filtered = useMemo(() => {
     return entries
       .filter((e) =>
         [e.barcode, e.name, e.sku, e.location, e.shelf]
           .join(" ")
           .toLowerCase()
-          .includes(search.toLowerCase())
+          .includes(searchTerm.toLowerCase())
       )
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-  }, [entries, search])
+  }, [entries, searchTerm])
 
-  // summary totals
   const totals = useMemo(() => {
     const totalQty = entries.reduce((sum, e) => sum + e.quantity, 0)
     return { total: entries.length, totalQty }
@@ -78,7 +75,6 @@ export default function GoodsInPage() {
       const entry: GoodsInEntry = await res.json()
       setEntries((prev) => [entry, ...prev])
       toast.success("Goods in logged!")
-      // reset
       setBarcode("")
       setName("")
       setSku("")
@@ -128,11 +124,9 @@ export default function GoodsInPage() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8 pb-8">
-      {/* entry form */}
       <Card>
         <h2 className="text-2xl font-semibold mb-4">Goods In</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Barcode + Scanner */}
           <div className="md:col-span-3">
             <label className="block text-sm font-medium text-gray-200 mb-1">Barcode</label>
             <div className="flex">
@@ -153,7 +147,6 @@ export default function GoodsInPage() {
               </button>
             </div>
           </div>
-          {/* other fields */}
           {[
             { label: "Name", value: name, setter: setName },
             { label: "SKU", value: sku, setter: setSku },
@@ -161,9 +154,7 @@ export default function GoodsInPage() {
             { label: "Shelf", value: shelf, setter: setShelf },
           ].map((field) => (
             <div key={field.label}>
-              <label className="block text-sm font-medium text-gray-200 mb-1">
-                {field.label}
-              </label>
+              <label className="block text-sm font-medium text-gray-200 mb-1">{field.label}</label>
               <input
                 type="text"
                 value={field.value}
@@ -184,7 +175,7 @@ export default function GoodsInPage() {
             />
           </div>
         </div>
-        <div className="mt-6 flex justify-between">
+        <div className="mt-6 flex justify-end space-x-4">
           <MotionButton
             onClick={exportCSV}
             whileHover={{ scale: 1.02 }}
@@ -204,36 +195,38 @@ export default function GoodsInPage() {
         </div>
       </Card>
 
-      {/* summary bar */}
       <Card>
-        <div className="flex justify-between items-center">
-          <div>
-            <div className="text-sm text-gray-400">Total Entries</div>
-            <div className="text-xl font-semibold">{totals.total}</div>
-          </div>
-          <div>
-            <div className="text-sm text-gray-400">Total Quantity</div>
-            <div className="text-xl font-semibold">{totals.totalQty}</div>
+        <h3 className="text-xl font-semibold mb-4">Recent Goods In</h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="relative w-full max-w-sm">
+            <input
+              type="text"
+              placeholder="Filter table…"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-lg border bg-gray-800 px-4 py-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500"
+            />
+            <SearchIcon size={16} className="absolute top-2 right-3 text-gray-400" />
           </div>
         </div>
-      </Card>
-
-      {/* recent log */}
-      <Card>
-        <h3 className="text-xl font-semibold mb-4 flex justify-between items-center">
-          Recent Goods In
-        </h3>
         <div className="overflow-x-auto">
           <table className="min-w-full text-white text-sm">
             <thead>
               <tr className="border-b border-gray-600">
-                {["Time", "Barcode", "Name", "SKU", "Qty", "Location", "Shelf", "Actions"].map(
-                  (h) => (
-                    <th key={h} className="p-2 text-left">
-                      {h}
-                    </th>
-                  )
-                )}
+                {[
+                  "Time",
+                  "Barcode",
+                  "Name",
+                  "SKU",
+                  "Qty",
+                  "Location",
+                  "Shelf",
+                  "Actions",
+                ].map((h) => (
+                  <th key={h} className="p-2 text-left">
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
