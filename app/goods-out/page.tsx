@@ -1,10 +1,9 @@
-// app/goods-out/page.tsx
 "use client"
 
-import { useEffect, useState, useRef } from "react"
-import { Combobox } from "@headlessui/react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { motion } from "framer-motion"
-import { CheckCircle, Camera as CameraIcon, ChevronsUpDown } from "lucide-react"
+import { Combobox } from "@headlessui/react"
+import { Camera as CameraIcon, ChevronsUpDown, CheckCircle, Trash2, Download, Search as SearchIcon } from "lucide-react"
 import { toast } from "sonner"
 
 import { Card } from "@/components/Card"
@@ -12,6 +11,7 @@ import { MotionButton } from "@/components/button"
 import { CameraBarcodeScanner } from "@/components/CameraBarcodeScanner"
 
 type Product = { id: number; barcode: string; name: string }
+
 type GoodsOutLog = {
   id: number
   timestamp: string
@@ -41,69 +41,128 @@ export default function GoodsOutPage() {
   // Log search
   const [searchLog, setSearchLog] = useState("")
 
-  // Load products & logs on mount
+  // Load products & logs
   useEffect(() => {
-    Promise.all([
-      fetch("/api/products").then((r) => r.json()),
-      fetch("/api/goods-out").then((r) => r.json()),
-    ])
-      .then(([ps, ls]) => {
-        setProducts(ps)
-        setLogs(ls)
-      })
-      .catch(() => toast.error("Failed to load data"))
+    fetchData()
   }, [])
 
-  // Combobox options
-  const filtered =
-    query === ""
-      ? products
-      : products.filter(
-          (p) =>
-            p.name.toLowerCase().includes(query.toLowerCase()) ||
-            p.barcode.includes(query)
-        )
+  const fetchData = async () => {
+    try {
+      const [ps, ls] = await Promise.all([
+        fetch("/api/products").then((r) => r.json()),
+        fetch("/api/goods-out").then((r) => r.json()),
+      ])
+      setProducts(ps)
+      setLogs(ls)
+    } catch {
+      toast.error("Failed to load data")
+    }
+  }
 
+  // Combobox options
+  const filteredProducts = useMemo(() => {
+    if (!query) return products
+    return products.filter(
+      (p) =>
+        p.name.toLowerCase().includes(query.toLowerCase()) ||
+        p.barcode.includes(query)
+    )
+  }, [products, query])
+
+  // Filtered & sorted logs
+  const filteredLogs = useMemo(() => {
+    return logs
+      .filter(
+        (r) =>
+          r.name.toLowerCase().includes(searchLog.toLowerCase()) ||
+          r.barcode.includes(searchLog) ||
+          r.location.toLowerCase().includes(searchLog.toLowerCase())
+      )
+      .sort(
+        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      )
+  }, [logs, searchLog])
+
+  // Summary totals
+  const totals = useMemo(() => {
+    const totalCount = logs.length
+    const totalQty = logs.reduce((sum, r) => sum + r.quantity, 0)
+    return { totalCount, totalQty }
+  }, [logs])
+
+  // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selected || quantity < 1 || !location.trim() || !shelf.trim()) {
       return toast.error("Please fill all fields")
     }
-    const payload = {
-      barcode: selected.barcode,
-      name: selected.name,
-      sku: selected.barcode,
-      quantity,
-      location,
-      shelf,
-    }
-    const res = await fetch("/api/goods-out", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
-    if (!res.ok) {
+    try {
+      const payload = {
+        barcode: selected.barcode,
+        name: selected.name,
+        sku: selected.barcode,
+        quantity,
+        location,
+        shelf,
+      }
+      const res = await fetch("/api/goods-out", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) throw new Error()
+      const saved: GoodsOutLog = await res.json()
+      setLogs((prev) => [saved, ...prev])
+      toast.success("Goods removed!")
+      setSelected(null)
+      setQuery("")
+      setQuantity(1)
+      setLocation("")
+      setShelf("")
+      comboRef.current?.focus()
+    } catch {
       toast.error("Failed to save entry")
-      return
     }
-    const saved: GoodsOutLog = await res.json()
-    setLogs((l) => [saved, ...l])
-    toast.success("Goods removed!")
-    setSelected(null)
-    setQuery("")
-    setQuantity(1)
-    setLocation("")
-    setShelf("")
-    comboRef.current?.focus()
+  }
+
+  // Delete log entry
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete this log?")) return
+    try {
+      const res = await fetch(`/api/goods-out/${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error()
+      setLogs((prev) => prev.filter((r) => r.id !== id))
+      toast.success("Log deleted")
+    } catch {
+      toast.error("Delete failed")
+    }
+  }
+
+  // Export CSV
+  const exportCSV = () => {
+    const rows = [
+      ["Time", "Name", "Barcode", "Qty", "Location", "Shelf"],
+      ...logs.map((r) => [
+        new Date(r.timestamp).toISOString(),
+        r.name,
+        r.barcode,
+        r.quantity.toString(),
+        r.location,
+        r.shelf,
+      ]),
+    ]
+    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\r\n")
+    const blob = new Blob([csv], { type: "text/csv" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = "goods_out.csv"
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="space-y-8 pb-8"
-    >
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-8">
       {/* Header */}
       <div className="flex items-center gap-3">
         <CheckCircle size={28} className="text-rose-500" />
@@ -112,25 +171,15 @@ export default function GoodsOutPage() {
 
       {/* Form */}
       <Card>
-        <form
-          onSubmit={handleSubmit}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
-        >
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Product selector + scan */}
           <div className="md:col-span-3">
-            <label className="block text-sm font-medium mb-1 text-gray-200">
-              Product
-            </label>
+            <label className="block text-sm font-medium mb-1 text-gray-200">Product</label>
             <div className="relative">
-              <button
-                type="button"
-                onClick={() => setScannerOpen(true)}
-                className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200"
-                title="Scan barcode"
-              >
+              <button type="button" onClick={() => setScannerOpen(true)} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200" title="Scan barcode">
                 <CameraIcon size={20} />
               </button>
-              <Combobox value={selected} onChange={setSelected}>
+              <Combobox value={selected} onChange={setSelected} nullable>
                 <Combobox.Input
                   ref={comboRef}
                   className="w-full rounded-lg border border-gray-600 bg-gray-800 px-10 py-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-rose-500"
@@ -142,27 +191,14 @@ export default function GoodsOutPage() {
                   placeholder="Search by name or barcode…"
                 />
                 <Combobox.Button className="absolute inset-y-0 right-2 flex items-center">
-                  <ChevronsUpDown
-                    size={20}
-                    className="text-gray-400 hover:text-gray-200"
-                  />
+                  <ChevronsUpDown size={20} className="text-gray-400 hover:text-gray-200" />
                 </Combobox.Button>
-                {filtered.length > 0 && (
-                  <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-gray-800 py-1 shadow-lg text-sm">
-                    {filtered.map((p) => (
-                      <Combobox.Option
-                        key={p.id}
-                        value={p}
-                        className={({ active }) =>
-                          `cursor-pointer px-4 py-2 ${
-                            active ? "bg-rose-600 text-white" : "text-gray-200"
-                          }`
-                        }
-                      >
+                {filteredProducts.length > 0 && (
+                  <Combobox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-gray-800 py-1 shadow-lg text-sm scrollbar-thin scrollbar-thumb-rose-500">
+                    {filteredProducts.map((p) => (
+                      <Combobox.Option key={p.id} value={p} className={({ active }) => `cursor-pointer px-4 py-2 ${active ? 'bg-rose-600 text-white' : 'text-gray-200'}`}>
                         <div className="font-medium">{p.name}</div>
-                        <div className="text-xs text-gray-400">
-                          {p.barcode}
-                        </div>
+                        <div className="text-xs text-gray-400">{p.barcode}</div>
                       </Combobox.Option>
                     ))}
                   </Combobox.Options>
@@ -173,9 +209,7 @@ export default function GoodsOutPage() {
 
           {/* Quantity */}
           <div>
-            <label className="block text-sm font-medium mb-1 text-gray-200">
-              Quantity
-            </label>
+            <label className="block text-sm font-medium mb-1 text-gray-200">Quantity</label>
             <input
               type="number"
               min={1}
@@ -187,9 +221,7 @@ export default function GoodsOutPage() {
 
           {/* Location */}
           <div>
-            <label className="block text-sm font-medium mb-1 text-gray-200">
-              Location
-            </label>
+            <label className="block text-sm font-medium mb-1 text-gray-200">Location</label>
             <input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
@@ -199,9 +231,7 @@ export default function GoodsOutPage() {
 
           {/* Shelf */}
           <div>
-            <label className="block text-sm font-medium mb-1 text-gray-200">
-              Shelf
-            </label>
+            <label className="block text-sm font-medium mb-1 text-gray-200">Shelf</label>
             <input
               value={shelf}
               onChange={(e) => setShelf(e.target.value)}
@@ -211,14 +241,8 @@ export default function GoodsOutPage() {
 
           {/* Submit */}
           <div className="md:col-span-3 flex justify-end">
-            <MotionButton
-              type="submit"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="bg-rose-600 text-white hover:bg-rose-700 px-6 py-2 rounded-lg flex items-center gap-2"
-            >
-              Remove Stock
-              <CheckCircle size={20} />
+            <MotionButton type="submit" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="bg-rose-600 text-white hover:bg-rose-700 px-6 py-2 rounded-lg flex items-center gap-2">
+              Remove Stock <CheckCircle size={20} />
             </MotionButton>
           </div>
         </form>
@@ -242,64 +266,65 @@ export default function GoodsOutPage() {
         />
       )}
 
-      {/* Search logs */}
-      <div className="max-w-4xl mx-auto space-y-4">
-        <input
-          type="text"
-          value={searchLog}
-          onChange={(e) => setSearchLog(e.target.value)}
-          placeholder="Search logs…"
-          className="w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-rose-500"
-        />
+      {/* Summary Totals */}
+      <Card>
+        <h3 className="text-xl font-semibold mb-4">Summary</h3>
+        <div className="flex gap-8">
+          <div>
+            <div className="text-sm text-gray-400">Total Logs</div>
+            <div className="text-lg font-semibold">{totals.totalCount}</div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-400">Total Removed</div>
+            <div className="text-lg font-semibold">{totals.totalQty}</div>
+          </div>
+          <MotionButton onClick={exportCSV} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="ml-auto bg-rose-600 px-4 py-2 rounded-lg text-white flex items-center gap-2 hover:bg-rose-700">
+            <Download size={16} /> Export CSV
+          </MotionButton>
+        </div>
+      </Card>
 
+      {/* Search logs + Table */}
+      <div className="space-y-4">
+        <div className="relative w-full max-w-sm">
+          <input
+            type="text"
+            placeholder="Search logs…"
+            value={searchLog}
+            onChange={(e) => setSearchLog(e.target.value)}
+            className="w-full rounded-lg border bg-gray-800 px-4 py-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500"
+          />
+          <SearchIcon size={16} className="absolute top-2 right-3 text-gray-400" />
+        </div>
         <div className="overflow-x-auto bg-gray-800 p-4 rounded-2xl shadow-lg">
           <table className="min-w-full text-white text-sm">
             <thead>
               <tr className="border-b border-gray-600">
-                {[
-                  "Time",
-                  "Product",
-                  "Barcode",
-                  "Qty",
-                  "Location",
-                  "Shelf",
-                ].map((h) => (
-                  <th key={h} className="p-2 text-left">
-                    {h}
-                  </th>
+                {["Time", "Name", "Barcode", "Qty", "Location", "Shelf", "Actions"].map((h) => (
+                  <th key={h} className="p-2 text-left">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {logs
-                .filter(
-                  (r) =>
-                    r.name.toLowerCase().includes(searchLog.toLowerCase()) ||
-                    r.barcode.includes(searchLog) ||
-                    r.location.toLowerCase().includes(searchLog.toLowerCase())
-                )
-                .map((r) => (
-                  <tr
-                    key={r.id}
-                    className="border-b border-gray-700 hover:bg-gray-700"
-                  >
-                    <td className="p-2">
-                      {new Date(r.timestamp).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </td>
-                    <td className="p-2">{r.name}</td>
-                    <td className="p-2">{r.barcode}</td>
-                    <td className="p-2">{r.quantity}</td>
-                    <td className="p-2">{r.location}</td>
-                    <td className="p-2">{r.shelf}</td>
-                  </tr>
-                ))}
-              {logs.length === 0 && (
+              {filteredLogs.map((r) => (
+                <tr key={r.id} className="border-b border-gray-700 hover:bg-gray-700 transition-colors">
+                  <td className="p-2">{new Date(r.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
+                  <td className="p-2">{r.name}</td>
+                  <td className="p-2">{r.barcode}</td>
+                  <td className="p-2">{r.quantity}</td>
+                  <td className="p-2">{r.location}</td>
+                  <td className="p-2">{r.shelf}</td>
+                  <td className="p-2 flex gap-2">
+                    <button onClick={() => handleDelete(r.id)} className="p-1 text-red-500 hover:text-red-600">
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {filteredLogs.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="p-4 text-center text-gray-400">
-                    No logs yet
+                  <td colSpan={7} className="p-4 text-center text-gray-400">
+                    No logs match your filter.
                   </td>
                 </tr>
               )}
