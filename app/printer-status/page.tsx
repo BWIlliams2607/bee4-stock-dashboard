@@ -13,12 +13,17 @@ export default function PrinterStatusPage() {
   const [logsFor, setLogsFor] = useState<number | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
-  const fetchAll = () =>
-    fetch("/api/printers")
-      .then((r) => r.json())
-      .then(setPrinters);
+  // Fetch and set the full list
+  const fetchAll = async () => {
+    const res = await fetch("/api/printers");
+    const data: Printer[] = await res.json();
+    setPrinters(data);
+  };
 
-  useEffect(fetchAll, []);
+  // Run once on mount
+  useEffect(() => {
+    fetchAll();
+  }, []);
 
   const deletePrinter = async (id: number) => {
     await fetch(`/api/printers/${id}`, { method: "DELETE" });
@@ -41,7 +46,7 @@ export default function PrinterStatusPage() {
         </button>
       </div>
 
-      {/* Table */}
+      {/* Table of printers */}
       <PrinterStatusTable
         printers={printers}
         onEdit={(p) => {
@@ -52,7 +57,7 @@ export default function PrinterStatusPage() {
         onViewLogs={(id) => setLogsFor(id)}
       />
 
-      {/* Add / Edit Modal */}
+      {/* Add/Edit Printer Modal */}
       <PrinterFormModal
         isOpen={formOpen}
         onClose={() => setFormOpen(false)}
@@ -80,8 +85,8 @@ export default function PrinterStatusPage() {
       {logsFor !== null && (
         <PrinterLogsModal
           isOpen={logsFor !== null}
-          onClose={() => setLogsFor(null)}
           printerId={logsFor}
+          onClose={() => setLogsFor(null)}
         />
       )}
     </div>
