@@ -59,19 +59,16 @@ export function Sidebar() {
   const [darkMode, setDarkMode] = useState(false)
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({})
 
-  // initialize expandedSections
   useEffect(() => {
     const init: Record<string, boolean> = {}
     navSections.forEach((sec) => (init[sec.label] = true))
     setExpandedSections(init)
   }, [])
 
-  // toggle theme
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode)
   }, [darkMode])
 
-  // filter links
   const filteredSections = navSections
     .map((section) => ({
       ...section,
@@ -82,7 +79,7 @@ export function Sidebar() {
     .filter((section) => section.links.length > 0)
 
   const renderNav = (mobile = false) => (
-    <nav className="flex-1 flex flex-col gap-2 overflow-auto">
+    <nav className="flex-1 flex flex-col gap-2 overflow-auto px-2 scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-background">
       <div className="px-4 py-2">
         <div className="relative">
           <input
@@ -90,9 +87,9 @@ export function Sidebar() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search..."
-            className="w-full rounded-lg border bg-input px-4 py-2 pr-10 text-sm focus:ring-2"
+            className="w-full rounded-md bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
-          <SearchIcon size={16} className="absolute top-2.5 right-3 text-muted-foreground" />
+          <SearchIcon size={16} className="absolute top-3 right-3 text-muted-foreground" />
         </div>
       </div>
       {filteredSections.map((section, idx) => (
@@ -104,12 +101,11 @@ export function Sidebar() {
                 [section.label]: !prev[section.label],
               }))
             }
-            className="w-full flex items-center justify-between uppercase text-xs text-muted-foreground font-semibold px-4 py-2"
+            className="flex w-full items-center justify-between uppercase text-xs text-muted-foreground font-semibold px-4 py-2"
           >
             {section.label}
             {expandedSections[section.label] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
-
           <AnimatePresence initial={false}>
             {expandedSections[section.label] && (
               <motion.div
@@ -122,18 +118,18 @@ export function Sidebar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`flex items-center gap-3 px-6 py-2 rounded-lg transition-colors 
+                    className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors
                       ${pathname === link.href
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-700 text-white shadow'
-                        : 'text-muted-foreground hover:bg-muted/40'}`}
+                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow'
+                        : 'text-muted-foreground hover:bg-background/30'}`}
                     onClick={() => mobile && setOpenMobile(false)}
                   >
                     {link.icon}
-                    {!collapsed && <span className="font-medium">{link.name}</span>}
+                    {!collapsed && <span className="flex-1">{link.name}</span>}
                     {pathname === link.href && (
                       <motion.div
                         layoutId="active-link"
-                        className="ml-auto w-2 h-2 rounded-full bg-blue-500"
+                        className="w-2 h-2 rounded-full bg-pink-400"
                       />
                     )}
                   </Link>
@@ -141,7 +137,6 @@ export function Sidebar() {
               </motion.div>
             )}
           </AnimatePresence>
-
           {idx < filteredSections.length - 1 && <div className="border-t border-border my-2 mx-4" />}
         </div>
       ))}
@@ -150,79 +145,55 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Desktop */}
-      <aside
-        className={`hidden md:flex flex-col h-screen fixed left-0 top-0 z-30 bg-background shadow-xl backdrop-blur-lg transition-width duration-300
-          ${collapsed ? 'w-20' : 'w-64'}`}
+      {/* Desktop Sidebar */}
+      <aside className={`hidden md:flex flex-col h-screen fixed top-0 z-30 bg-background shadow-xl backdrop-blur-lg transition-all duration-300
+        ${collapsed ? 'w-20' : 'w-64'}`}
       >
         <div className="h-16 flex items-center justify-between px-4">
-          {!collapsed && <span className="font-bold text-xl">Bee4 Stock</span>}
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="p-2 text-muted-foreground hover:text-white"
-            aria-label="Toggle collapse"
-          >
-            {collapsed ? <Menu size={20} /> : <X size={20} />}
-          </button>
+          {!collapsed && <span className="font-bold text-lg">Bee4 Stock</span>}
+          <div className="flex items-center gap-2">
+            <button onClick={() => setDarkMode(!darkMode)} aria-label="Toggle theme" className="p-2 text-muted-foreground hover:text-white">
+              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button onClick={() => setCollapsed(!collapsed)} aria-label="Toggle collapse" className="p-2 text-muted-foreground hover:text-white">
+              {collapsed ? <Menu size={20} /> : <X size={20} />}
+            </button>
+          </div>
         </div>
-
         {renderNav(false)}
-
-        <div className="mt-auto px-4 py-4 border-t border-border flex items-center gap-2">
-          <button onClick={() => setDarkMode(!darkMode)} aria-label="Toggle theme">
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
-          {!collapsed && <span className="text-sm">{darkMode ? 'Light Mode' : 'Dark Mode'}</span>}
-        </div>
       </aside>
 
-      {/* Mobile */}
+      {/* Mobile Header */}
       <div className="md:hidden flex items-center h-16 px-4 bg-background border-b border-border z-20">
-        <button
-          className="p-2 text-muted-foreground"
-          onClick={() => setOpenMobile(true)}
-          aria-label="Open Menu"
-        >
+        <button onClick={() => setOpenMobile(true)} className="p-2 text-muted-foreground hover:text-white" aria-label="Open Menu">
           <Menu size={24} />
         </button>
         <span className="ml-4 font-bold text-lg">Bee4 Stock</span>
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className="ml-auto p-2 text-muted-foreground"
-          aria-label="Toggle theme"
-        >
+        <button onClick={() => setDarkMode(!darkMode)} className="ml-auto p-2 text-muted-foreground hover:text-white" aria-label="Toggle theme">
           {darkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
       </div>
 
+      {/* Mobile Sidebar */}
       <AnimatePresence>
         {openMobile && (
           <motion.div
             className="fixed inset-0 z-50 bg-background/80 backdrop-blur-md"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setOpenMobile(false)}
           >
             <motion.aside
               className="absolute left-0 top-0 h-full w-64 bg-background shadow-xl border-r border-border flex flex-col"
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
+              initial={{ x: '-100%' }} animate={{ x: 0 }} exit={{ x: '-100%' }}
               transition={{ type: 'spring', stiffness: 400, damping: 30 }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="h-16 flex items-center justify-between px-4">
                 <span className="font-bold text-lg">Bee4 Stock</span>
-                <button
-                  onClick={() => setOpenMobile(false)}
-                  className="p-2 text-muted-foreground hover:text-white"
-                  aria-label="Close Menu"
-                >
+                <button onClick={() => setOpenMobile(false)} className="p-2 text-muted-foreground hover:text-white" aria-label="Close Menu">
                   <X size={22} />
                 </button>
               </div>
-
               {renderNav(true)}
             </motion.aside>
           </motion.div>
