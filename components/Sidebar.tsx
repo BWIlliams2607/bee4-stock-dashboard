@@ -35,7 +35,7 @@ const navSections = [
   {
     label: "Admin",
     links: [
-      { name: "Product Admin",       href: "/admin/products",        icon: <Settings size={18}/> },
+      { name: "Product Admin",       href: "/admin",        icon: <Settings size={18}/> },
       { name: "Settings",            href: "/settings",               icon: <Settings size={18}/> },
       { name: "Maintenance Ordering",href: "/maintenance-ordering",   icon: <ClipboardList size={18}/> },
       { name: "Printer Status",      href: "/printer-status",         icon: <Truck size={18}/> },
