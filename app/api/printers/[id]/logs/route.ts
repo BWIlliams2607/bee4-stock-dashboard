@@ -1,18 +1,13 @@
+// app/api/printers/[id]/logs/route.ts
 "use server";
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { PrinterState } from "@prisma/client";
 
-interface Context {
-  params: {
-    id: string;
-  };
-}
-
 export async function GET(
   request: Request,
-  { params }: Context
+  { params }: { params: { id: string } }
 ) {
   const logs = await prisma.printerLog.findMany({
     where: { printerId: Number(params.id) },
@@ -23,9 +18,10 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  { params }: Context
+  { params }: { params: { id: string } }
 ) {
-  const { state, notes }: { state: PrinterState; notes?: string } = await request.json();
+  const { state, notes }: { state: PrinterState; notes?: string } =
+    await request.json();
 
   const log = await prisma.printerLog.create({
     data: {
