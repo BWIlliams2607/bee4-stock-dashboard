@@ -4,12 +4,10 @@ import { prisma } from "@/lib/prisma";
 
 export async function PATCH(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }  // <-- keep the destructuring, but drop the `context: …` annotation
 ) {
-  const { id } = context.params;
-  const { allowedPages } = (await request.json()) as {
-    allowedPages: string[];
-  };
+  const { id } = params;
+  const { allowedPages } = (await request.json()) as { allowedPages: string[] };
 
   const updated = await prisma.user.update({
     where: { id },
