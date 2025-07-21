@@ -49,19 +49,18 @@ const navSections = [
       { name: "Settings",      href: "/settings",         icon: <Settings size={18} /> },
     ],
   },
-  // <-- in the future just add:
-  // {
-  //   label: "Maintenance",
-  //   links: [
-  //     { name: "Maintenance Ordering", href: "/maintenance-ordering", icon: <ClipboardList size={18} /> },
-  //   ],
-  // },
-  // {
-  //   label: "Status",
-  //   links: [
-  //     { name: "Printer Status", href: "/printer-status", icon: <Truck size={18} /> },
-  //   ],
-  // },
+  {
+    label: "Maintenance",
+    links: [
+      { name: "Maintenance Ordering", href: "/maintenance-ordering", icon: <ClipboardList size={18} /> },
+    ],
+  },
+  {
+    label: "Status",
+    links: [
+      { name: "Printer Status", href: "/printer-status", icon: <Truck size={18} /> },
+    ],
+  },
 ]
 
 export function Sidebar() {
