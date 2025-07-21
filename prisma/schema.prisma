@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -9,7 +7,10 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Goods In Log
+/// -------------------------------
+/// Logs (unchanged)
+/// -------------------------------
+
 model GoodsInLog {
   id        Int      @id @default(autoincrement())
   timestamp DateTime @default(now())
@@ -23,7 +24,6 @@ model GoodsInLog {
   @@map("goods_in_logs")
 }
 
-// Goods Out Log
 model GoodsOutLog {
   id        Int      @id @default(autoincrement())
   timestamp DateTime @default(now())
@@ -37,7 +37,6 @@ model GoodsOutLog {
   @@map("goods_out_logs")
 }
 
-// Incoming Stock Log
 model IncomingStockLog {
   id           Int      @id @default(autoincrement())
   timestamp    DateTime @default(now())
@@ -51,31 +50,81 @@ model IncomingStockLog {
   @@map("incoming_stock_logs")
 }
 
-// Products
-model Product {
-  id          Int         @id @default(autoincrement())
-  barcode     String      @unique
-  name        String
-  description String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+/// -------------------------------
+/// Products & Categories
+/// -------------------------------
 
-  // Many-to-many relation to Category
-  categories  Category[]
+model Product {
+  id              Int         @id @default(autoincrement())
+  barcode         String      @unique
+  name            String
+  description     String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Many‑to‑many to Category
+  categories      Category[]
+
+  // Optional defaults for stock location
+  supplierId      Int?
+  defaultSupplier Supplier?   @relation(fields: [supplierId], references: [id])
+
+  locationId      Int?
+  defaultLocation Location?   @relation(fields: [locationId], references: [id])
+
+  shelfId         Int?
+  defaultShelf    Shelf?      @relation(fields: [shelfId], references: [id])
 
   @@map("products")
 }
 
-// Categories
 model Category {
   id       Int       @id @default(autoincrement())
   name     String    @unique
 
-  // Many-to-many relation to Product
+  // Many‑to‑many back to Product
   products Product[]
 
   @@map("categories")
 }
+
+/// -------------------------------
+/// New master‑data tables
+/// -------------------------------
+
+model Supplier {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+
+  // back‑relation for Product.defaultSupplier
+  products Product[]
+
+  @@map("suppliers")
+}
+
+model Location {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+
+  // back‑relation for Product.defaultLocation
+  products Product[]
+
+  @@map("locations")
+}
+
+model Shelf {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+
+  // back‑relation for Product.defaultShelf
+  products Product[]
+
+  @@map("shelves")
+}
+
+/// -------------------------------
+/// Users (unchanged)
+/// -------------------------------
 
 model User {
   id           String   @id @default(cuid())
