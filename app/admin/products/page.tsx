@@ -31,61 +31,6 @@ const BarcodeScanner = dynamic(
   { ssr: false }
 );
 
-function CameraBarcodeScanner({
-  onDetected,
-  onClose,
-}: {
-  onDetected: (code: string) => void;
-  onClose: () => void;
-}) {
-  const [error, setError] = useState<string | null>(null);
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="relative bg-gray-800 rounded-xl shadow-2xl p-4 max-w-md w-full">
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-gray-300 hover:text-white"
-        >
-          <X size={20} />
-        </button>
-
-        <div className="flex items-center gap-2 mb-2 text-white text-lg font-bold">
-          <CameraIcon size={22} /> Scan Barcode
-        </div>
-
-        <div className="w-full overflow-hidden rounded-lg bg-black">
-          <BarcodeScanner
-            width={320}
-            height={240}
-            delay={300}
-            onError={(err) => {
-              const msg = typeof err === "string" ? err : err?.message;
-              setError(msg || "Camera error");
-            }}
-            onUpdate={(err, result) => {
-              if (err) {
-                setError("No code detected");
-              } else if (result) {
-                onDetected(result.getText());
-              }
-            }}
-          />
-        </div>
-
-        {error && (
-          <p className="mt-2 text-rose-500 text-xs text-center">{error}</p>
-        )}
-
-        <p className="mt-2 text-xs text-gray-400 text-center">
-          Point your camera at a barcode or QR code.
-          <br />
-          Tap outside or “X” to close.
-        </p>
-      </div>
-    </div>
-  );
-}
-
 export default function ProductAdminPage() {
   // ─── MASTER‑DATA ─────────────────────────────────────────────────────────────
   const [categories, setCategories] = useState<Category[]>([]);
@@ -103,6 +48,18 @@ export default function ProductAdminPage() {
 
   // ─── NEW CATEGORY ─────────────────────────────────────────────────────────────
   const [newCategory, setNewCategory] = useState("");
+
+  // ─── NEW SUPPLIER ─────────────────────────────────────────────────────────────
+  const [newSupplierName, setNewSupplierName] = useState("");
+  const [supplierSearch, setSupplierSearch] = useState("");
+
+  // ─── NEW LOCATION ─────────────────────────────────────────────────────────────
+  const [newLocationName, setNewLocationName] = useState("");
+  const [locationSearch, setLocationSearch] = useState("");
+
+  // ─── NEW SHELF ─────────────────────────────────────────────────────────────────
+  const [newShelfName, setNewShelfName] = useState("");
+  const [shelfSearch, setShelfSearch] = useState("");
 
   // ─── NEW PRODUCT ───────────────────────────────────────────────────────────────
   const [newProdBarcode, setNewProdBarcode] = useState("");
@@ -144,6 +101,24 @@ export default function ProductAdminPage() {
       )
     : products;
 
+  const filteredSuppliers = supplierSearch
+    ? suppliers.filter((s) =>
+        s.name.toLowerCase().includes(supplierSearch.toLowerCase())
+      )
+    : suppliers;
+
+  const filteredLocations = locationSearch
+    ? locations.filter((l) =>
+        l.name.toLowerCase().includes(locationSearch.toLowerCase())
+      )
+    : locations;
+
+  const filteredShelves = shelfSearch
+    ? shelves.filter((sh) =>
+        sh.name.toLowerCase().includes(shelfSearch.toLowerCase())
+      )
+    : shelves;
+
   // ─── HANDLERS ─────────────────────────────────────────────────────────────────
   const handleAddCategory = async () => {
     if (!newCategory.trim()) return;
@@ -160,6 +135,57 @@ export default function ProductAdminPage() {
     setCategories((c) => [...c, cat]);
     setNewCategory("");
     toast.success("Category added");
+  };
+
+  const handleAddSupplier = async () => {
+    if (!newSupplierName.trim()) return;
+    const res = await fetch("/api/suppliers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newSupplierName.trim() }),
+    });
+    if (!res.ok) {
+      toast.error("Could not create supplier");
+      return;
+    }
+    const sup: Supplier = await res.json();
+    setSuppliers((s) => [...s, sup]);
+    setNewSupplierName("");
+    toast.success("Supplier added");
+  };
+
+  const handleAddLocation = async () => {
+    if (!newLocationName.trim()) return;
+    const res = await fetch("/api/locations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newLocationName.trim() }),
+    });
+    if (!res.ok) {
+      toast.error("Could not create location");
+      return;
+    }
+    const loc: Location = await res.json();
+    setLocations((l) => [...l, loc]);
+    setNewLocationName("");
+    toast.success("Location added");
+  };
+
+  const handleAddShelf = async () => {
+    if (!newShelfName.trim()) return;
+    const res = await fetch("/api/shelves", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newShelfName.trim() }),
+    });
+    if (!res.ok) {
+      toast.error("Could not create shelf");
+      return;
+    }
+    const sh: Shelf = await res.json();
+    setShelves((s) => [...s, sh]);
+    setNewShelfName("");
+    toast.success("Shelf added");
   };
 
   const handleAddProduct = async () => {
@@ -283,6 +309,145 @@ export default function ProductAdminPage() {
             {filteredCats.length === 0 && (
               <li className="text-gray-400 text-sm text-center py-2">
                 No categories
+              </li>
+            )}
+          </ul>
+        </section>
+
+        {/* === Suppliers Section === */}
+        <section className="bg-gray-800 shadow-lg rounded-2xl p-8">
+          <h2 className="text-2xl font-semibold text-white mb-4">
+            Suppliers
+          </h2>
+          <div className="flex gap-4 mb-6">
+            <input
+              type="text"
+              value={newSupplierName}
+              onChange={(e) => setNewSupplierName(e.target.value)}
+              placeholder="New supplier name"
+              className="flex-1 h-12 rounded-lg border border-gray-700 px-4 bg-gray-700 text-sm placeholder-gray-400 text-white focus:ring-2 focus:ring-green-500"
+            />
+            <MotionButton
+              onClick={handleAddSupplier}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="h-12 px-6 rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
+            >
+              <Plus size={16} /> Add Supplier
+            </MotionButton>
+          </div>
+          <input
+            type="text"
+            value={supplierSearch}
+            onChange={(e) => setSupplierSearch(e.target.value)}
+            placeholder="Filter suppliers…"
+            className="w-full h-12 mb-4 rounded-lg border border-gray-700 px-4 bg-gray-700 text-sm placeholder-gray-400 text-white focus:ring-2 focus:ring-green-500"
+          />
+          <ul className="max-h-40 overflow-auto scrollbar-thin scrollbar-thumb-gray-600 space-y-1">
+            {filteredSuppliers.map((s) => (
+              <li
+                key={s.id}
+                className="px-4 py-2 rounded-lg text-white hover:bg-gray-700 cursor-pointer"
+              >
+                {s.name}
+              </li>
+            ))}
+            {filteredSuppliers.length === 0 && (
+              <li className="text-gray-400 text-sm text-center py-2">
+                No suppliers
+              </li>
+            )}
+          </ul>
+        </section>
+
+        {/* === Locations Section === */}
+        <section className="bg-gray-800 shadow-lg rounded-2xl p-8">
+          <h2 className="text-2xl font-semibold text-white mb-4">
+            Locations
+          </h2>
+          <div className="flex gap-4 mb-6">
+            <input
+              type="text"
+              value={newLocationName}
+              onChange={(e) => setNewLocationName(e.target.value)}
+              placeholder="New location name"
+              className="flex-1 h-12 rounded-lg border border-gray-700 px-4 bg-gray-700 text-sm placeholder-gray-400 text-white focus:ring-2 focus:ring-green-500"
+            />
+            <MotionButton
+              onClick={handleAddLocation}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="h-12 px-6 rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
+            >
+              <Plus size={16} /> Add Location
+            </MotionButton>
+          </div>
+          <input
+            type="text"
+            value={locationSearch}
+            onChange={(e) => setLocationSearch(e.target.value)}
+
+            placeholder="Filter locations…"
+            className="w-full h-12 mb-4 rounded-lg border border-gray-700 px-4 bg-gray-700 text-sm placeholder-gray-400 text-white focus:ring-2 focus:ring-green-500"
+          />
+          <ul className="max-h-40 overflow-auto scrollbar-thin scrollbar-thumb-gray-600 space-y-1">
+            {filteredLocations.map((l) => (
+              <li
+                key={l.id}
+                className="px-4 py-2 rounded-lg text-white hover:bg-gray-700 cursor-pointer"
+              >
+                {l.name}
+              </li>
+            ))}
+            {filteredLocations.length === 0 && (
+              <li className="text-gray-400 text-sm text-center py-2">
+                No locations
+              </li>
+            )}
+          </ul>
+        </section>
+
+        {/* === Shelves Section === */}
+        <section className="bg-gray-800 shadow-lg rounded-2xl p-8">
+          <h2 className="text-2xl font-semibold text-white mb-4">
+            Shelves
+          </h2>
+          <div className="flex gap-4 mb-6">
+            <input
+              type="text"
+              value={newShelfName}
+              onChange={(e) => setNewShelfName(e.target.value)}
+              placeholder="New shelf name"
+              className="flex-1 h-12 rounded-lg border border-gray-700 px-4 bg-gray-700 text-sm placeholder-gray-400 text-white focus:ring-2 focus:ring-green-500"
+            />
+            <MotionButton
+              onClick={handleAddShelf}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="h-12 px-6 rounded-lg bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
+            >
+              <Plus size={16} /> Add Shelf
+            </MotionButton>
+          </div>
+          <input
+            type="text"
+            value={shelfSearch}
+            onChange={(e) => setShelfSearch(e.target.value)}
+            placeholder="Filter shelves…"
+            className="w-full h-12 mb-4 rounded-lg border border-gray-700 px-4 bg-gray-700 text-sm placeholder-gray-400 text-white focus:ring-2 focus:ring-green-500"
+          />
+          <ul className="max-h-40 overflow-auto scrollbar-thin scrollbar-thumb-gray-600 space-y-1">
+            {filteredShelves.map((sh) => (
+              <li
+                key={sh.id}
+                className="px-4 py-2 rounded-lg text-white hover:bg-gray-700 cursor-pointer"
+              >
+                {sh.name}
+              </li>
+            ))}
+            {filteredShelves.length === 0 && (
+              <li className="text-gray-400 text-sm text-center py-2">
+                No shelves
               </li>
             )}
           </ul>
