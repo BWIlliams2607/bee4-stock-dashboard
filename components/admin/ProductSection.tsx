@@ -292,6 +292,6 @@ export default function ProductSection() {
           onSave={saveEdit}
         />
       )}
-    </div>
+    </div>  
   );
 }
