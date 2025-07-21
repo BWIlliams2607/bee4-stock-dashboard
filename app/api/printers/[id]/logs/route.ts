@@ -1,18 +1,39 @@
+"use server";
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import type { PrinterState } from "@prisma/client";
 
-export async function GET(_: Request, { params }) {
+interface Context {
+  params: {
+    id: string;
+  };
+}
+
+export async function GET(
+  request: Request,
+  { params }: Context
+) {
   const logs = await prisma.printerLog.findMany({
-    where: { printerId: +params.id },
+    where: { printerId: Number(params.id) },
     orderBy: { timestamp: "desc" },
   });
   return NextResponse.json(logs);
 }
 
-export async function POST(req: Request, { params }) {
-  const { state, notes } = await req.json();
+export async function POST(
+  request: Request,
+  { params }: Context
+) {
+  const { state, notes }: { state: PrinterState; notes?: string } = await request.json();
+
   const log = await prisma.printerLog.create({
-    data: { printerId: +params.id, state, notes },
+    data: {
+      printerId: Number(params.id),
+      state,
+      notes,
+    },
   });
+
   return NextResponse.json(log);
 }
