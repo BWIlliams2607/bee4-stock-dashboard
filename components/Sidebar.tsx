@@ -69,6 +69,7 @@ export function Sidebar() {
     document.documentElement.classList.toggle('dark', darkMode)
   }, [darkMode])
 
+  // filter sections/links based on search
   const filteredSections = navSections
     .map((section) => ({
       ...section,
@@ -78,20 +79,25 @@ export function Sidebar() {
     }))
     .filter((section) => section.links.length > 0)
 
+  // navigation list
   const renderNav = (mobile = false) => (
     <nav className="flex-1 flex flex-col gap-2 overflow-auto px-2 scrollbar-thin scrollbar-thumb-purple-600 scrollbar-track-background">
-      <div className="px-4 py-2">
-        <div className="relative">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search..."
-            className="w-full rounded-md bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
-          <SearchIcon size={16} className="absolute top-3 right-3 text-muted-foreground" />
+      {/* only show search when expanded */}
+      {!collapsed && (
+        <div className="px-4 py-2">
+          <div className="relative">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search..."
+              className="w-full rounded-md bg-background px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+            <SearchIcon size={16} className="absolute top-3 right-3 text-muted-foreground" />
+          </div>
         </div>
-      </div>
+      )}
+
       {filteredSections.map((section, idx) => (
         <div key={section.label} className="px-2">
           <button
@@ -103,7 +109,7 @@ export function Sidebar() {
             }
             className="flex w-full items-center justify-between uppercase text-xs text-muted-foreground font-semibold px-4 py-2"
           >
-            {section.label}
+            {!collapsed && section.label}
             {expandedSections[section.label] ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
           <AnimatePresence initial={false}>
@@ -146,15 +152,19 @@ export function Sidebar() {
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className={`hidden md:flex flex-col h-screen fixed top-0 z-30 bg-background shadow-xl backdrop-blur-lg transition-all duration-300
-        ${collapsed ? 'w-20' : 'w-64'}`}
+      <aside
+        className={`hidden md:flex flex-col h-screen fixed top-0 z-30 bg-background shadow-xl backdrop-blur-lg transition-all duration-300
+          ${collapsed ? 'w-20' : 'w-64'}`}
       >
         <div className="h-16 flex items-center justify-between px-4">
           {!collapsed && <span className="font-bold text-lg">Bee4 Stock</span>}
           <div className="flex items-center gap-2">
-            <button onClick={() => setDarkMode(!darkMode)} aria-label="Toggle theme" className="p-2 text-muted-foreground hover:text-white">
-              {darkMode ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
+            {/* hide dark toggle when collapsed */}
+            {!collapsed && (
+              <button onClick={() => setDarkMode(!darkMode)} aria-label="Toggle theme" className="p-2 text-muted-foreground hover:text-white">
+                {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+            )}
             <button onClick={() => setCollapsed(!collapsed)} aria-label="Toggle collapse" className="p-2 text-muted-foreground hover:text-white">
               {collapsed ? <Menu size={20} /> : <X size={20} />}
             </button>
@@ -169,6 +179,7 @@ export function Sidebar() {
           <Menu size={24} />
         </button>
         <span className="ml-4 font-bold text-lg">Bee4 Stock</span>
+        {/* move dark toggle into mobile header */}
         <button onClick={() => setDarkMode(!darkMode)} className="ml-auto p-2 text-muted-foreground hover:text-white" aria-label="Toggle theme">
           {darkMode ? <Sun size={20} /> : <Moon size={20} />}
         </button>
