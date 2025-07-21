@@ -11,8 +11,9 @@ import type {
   Supplier,
   Location,
   Shelf,
-  Product as PrismaProduct,
-} from "@prisma/client";
+  ProductWithRelations,
+  EditPayload,
+} from "@/lib/types";              // your shared types file
 import { EditProductModal } from "@/components/EditProductModal";
 import { MotionButton } from "@/components/button";
 import {
@@ -24,23 +25,11 @@ import {
   X,
 } from "lucide-react";
 
-// Dynamically import so it only runs client-side
+// Dynamically import so it only runs client‑side
 const BarcodeScanner = dynamic(
   () => import("react-qr-barcode-scanner"),
   { ssr: false }
 );
-
-// payload type you'll send back to your PATCH route
-type EditPayload = {
-  id: number;
-  barcode: string;
-  name: string;
-  description?: string;
-  categoryIds: number[];
-  supplierId?: number;
-  locationId?: number;
-  shelfId?: number;
-};
 
 function CameraBarcodeScanner({
   onDetected,
@@ -98,38 +87,24 @@ function CameraBarcodeScanner({
 }
 
 export default function ProductAdminPage() {
-  //
-  // ─── MASTER-DATA ───────────────────────────────────────────────────────────────
-  //
+  // ─── MASTER‑DATA ─────────────────────────────────────────────────────────────
   const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [shelves, setShelves] = useState<Shelf[]>([]);
 
-  //
-  // ─── ENTITIES ───────────────────────────────────────────────────────────────────
-  //
-  const [products, setProducts] = useState<PrismaProduct & {
-    categories: Category[];
-    defaultSupplier?: Supplier;
-    defaultLocation?: Location;
-    defaultShelf?: Shelf;
-  }[]>([]);
+  // ─── ENTITIES ─────────────────────────────────────────────────────────────────
+  const [products, setProducts] = useState<ProductWithRelations[]>([]);
+  const [editing, setEditing] = useState<ProductWithRelations | null>(null);
 
-  //
-  // ─── FILTER STATE ──────────────────────────────────────────────────────────────
-  //
+  // ─── FILTER STATE ─────────────────────────────────────────────────────────────
   const [catSearch, setCatSearch] = useState("");
   const [prodSearch, setProdSearch] = useState("");
 
-  //
-  // ─── NEW CATEGORY ──────────────────────────────────────────────────────────────
-  //
+  // ─── NEW CATEGORY ─────────────────────────────────────────────────────────────
   const [newCategory, setNewCategory] = useState("");
 
-  //
   // ─── NEW PRODUCT ───────────────────────────────────────────────────────────────
-  //
   const [newProdBarcode, setNewProdBarcode] = useState("");
   const [newProdName, setNewProdName] = useState("");
   const [newProdDesc, setNewProdDesc] = useState("");
@@ -138,23 +113,12 @@ export default function ProductAdminPage() {
   const [newProdLocationId, setNewProdLocationId] = useState<number>();
   const [newProdShelfId, setNewProdShelfId] = useState<number>();
 
-  //
   // ─── MODALS & REFS ─────────────────────────────────────────────────────────────
-  //
   const [scannerOpen, setScannerOpen] = useState(false);
   const barcodeRef = useRef<HTMLInputElement>(null);
-
-  const [editing, setEditing] = useState<null | (PrismaProduct & {
-    categories: Category[];
-    defaultSupplier?: Supplier;
-    defaultLocation?: Location;
-    defaultShelf?: Shelf;
-  })>(null);
   const [editOpen, setEditOpen] = useState(false);
 
-  //
-  // ─── LOAD MASTER & DATA ────────────────────────────────────────────────────────
-  //
+  // ─── LOAD MASTER & DATA ───────────────────────────────────────────────────────
   useEffect(() => {
     Promise.all([
       fetch("/api/categories").then((r) => r.json()).then(setCategories),
@@ -165,9 +129,7 @@ export default function ProductAdminPage() {
     ]).catch(() => toast.error("Failed to load admin data"));
   }, []);
 
-  //
   // ─── FILTERED LISTS ────────────────────────────────────────────────────────────
-  //
   const filteredCats = catSearch
     ? categories.filter((c) =>
         c.name.toLowerCase().includes(catSearch.toLowerCase())
@@ -182,9 +144,7 @@ export default function ProductAdminPage() {
       )
     : products;
 
-  //
   // ─── HANDLERS ─────────────────────────────────────────────────────────────────
-  //
   const handleAddCategory = async () => {
     if (!newCategory.trim()) return;
     const res = await fetch("/api/categories", {
@@ -218,13 +178,13 @@ export default function ProductAdminPage() {
         supplierId: newProdSupplierId,
         locationId: newProdLocationId,
         shelfId: newProdShelfId,
-      }),
+      } as EditPayload),
     });
     if (!res.ok) {
       toast.error("Could not create product");
       return;
     }
-    const prod = await res.json();
+    const prod: ProductWithRelations = await res.json();
     setProducts((p) => [prod, ...p]);
     setNewProdBarcode("");
     setNewProdName("");
@@ -248,7 +208,7 @@ export default function ProductAdminPage() {
     }
   };
 
-  const openEdit = (p: typeof editing) => {
+  const openEdit = (p: ProductWithRelations) => {
     setEditing(p);
     setEditOpen(true);
   };
@@ -263,16 +223,14 @@ export default function ProductAdminPage() {
       toast.error("Update failed");
       return;
     }
-    const updated = await res.json();
+    const updated: ProductWithRelations = await res.json();
     setProducts((list) =>
       list.map((x) => (x.id === updated.id ? updated : x))
     );
     toast.success("Updated");
   };
 
-  //
   // ─── RENDER ────────────────────────────────────────────────────────────────────
-  //
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -478,7 +436,9 @@ export default function ProductAdminPage() {
               <select
                 value={newProdShelfId ?? ""}
                 onChange={(e) =>
-                  setNewProdShelfId(e.target.value ? +e.target.value : undefined)
+                  setNewProdShelfId(
+                    e.target.value ? +e.target.value : undefined
+                  )
                 }
                 className="w-full h-12 rounded-lg border border-gray-700 bg-gray-700 px-4 text-white"
               >
