@@ -55,25 +55,24 @@ model IncomingStockLog {
 /// -------------------------------
 
 model Product {
-  id              Int         @id @default(autoincrement())
-  barcode         String      @unique
-  name            String
-  description     String?
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id          Int         @id @default(autoincrement())
+  barcode     String      @unique
+  name        String
+  description String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
-  // Many‑to‑many to Category
-  categories      Category[]
+  categories  Category[]  // many-to-many via implicit join table
 
-  // Optional defaults for stock location
-  supplierId      Int?
-  defaultSupplier Supplier?   @relation(fields: [supplierId], references: [id])
+  /// make these optional relations explicitly handle deletions
+  supplierId   Int?
+  defaultSupplier Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
 
-  locationId      Int?
-  defaultLocation Location?   @relation(fields: [locationId], references: [id])
+  locationId   Int?
+  defaultLocation Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
-  shelfId         Int?
-  defaultShelf    Shelf?      @relation(fields: [shelfId], references: [id])
+  shelfId      Int?
+  defaultShelf Shelf?     @relation(fields: [shelfId], references: [id], onDelete: SetNull)
 
   @@map("products")
 }
@@ -81,9 +80,7 @@ model Product {
 model Category {
   id       Int       @id @default(autoincrement())
   name     String    @unique
-
-  // Many‑to‑many back to Product
-  products Product[]
+  products Product[]  // back‑relation
 
   @@map("categories")
 }
@@ -95,9 +92,7 @@ model Category {
 model Supplier {
   id       Int       @id @default(autoincrement())
   name     String    @unique
-
-  // back‑relation for Product.defaultSupplier
-  products Product[]
+  products Product[] // back‑relation
 
   @@map("suppliers")
 }
@@ -105,9 +100,7 @@ model Supplier {
 model Location {
   id       Int       @id @default(autoincrement())
   name     String    @unique
-
-  // back‑relation for Product.defaultLocation
-  products Product[]
+  products Product[] // back‑relation
 
   @@map("locations")
 }
@@ -115,9 +108,7 @@ model Location {
 model Shelf {
   id       Int       @id @default(autoincrement())
   name     String    @unique
-
-  // back‑relation for Product.defaultShelf
-  products Product[]
+  products Product[] // back‑relation
 
   @@map("shelves")
 }
